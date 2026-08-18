@@ -78,8 +78,8 @@ function CollectionsLanding() {
                 <img
                   src={
                     item.image
-                      ? `http://localhost:5000/uploads/categories/${item.image}`
-                      : "https://placehold.co/700x700"
+  ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+  : "https://placehold.co/700x700"
                   }
                   alt={item.name}
                   className="w-full h-[280px] md:h-[520px] object-cover hover:scale-105 transition duration-700"

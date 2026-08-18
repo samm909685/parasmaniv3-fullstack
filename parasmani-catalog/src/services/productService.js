@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/products";
-
+const API = "https://api.parasmanijewellers.in/api/products";
 export const getProducts = async () => {
   const res = await axios.get(API);
   return res.data;

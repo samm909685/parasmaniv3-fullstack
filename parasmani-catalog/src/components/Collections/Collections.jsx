@@ -52,9 +52,10 @@ function Collections() {
               <img
                 src={
                   category.image
-                    ? `http://localhost:5000/uploads/categories/${category.image}`
-                    : "https://placehold.co/600x700"
+  ? `https://api.parasmanijewellers.in/uploads/categories/${category.image}`
+  : "https://placehold.co/600x700"
                 }
+                
                 alt={category.name}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />

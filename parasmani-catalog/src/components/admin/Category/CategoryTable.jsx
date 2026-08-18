@@ -104,11 +104,11 @@ const [selectedId, setSelectedId] = useState(null);
                 <td className="p-5">
 
                   <img
-  src={
-    item.image
-      ? `http://localhost:5000/uploads/categories/${item.image}`
-      : "https://placehold.co/100x100"
-  }
+ src={
+  item.image
+    ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+    : "https://placehold.co/100x100"
+}
   alt={item.name}
   className="w-16 h-16 rounded-xl object-cover"
   onError={(e) => {
@@ -201,11 +201,11 @@ const [selectedId, setSelectedId] = useState(null);
             <div className="flex gap-4">
 
               <img
-  src={
-    item.image
-      ? `http://localhost:5000/uploads/categories/${item.image}`
-      : "https://placehold.co/100x100"
-  }
+ src={
+  item.image
+    ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+    : "https://placehold.co/100x100"
+}
   alt={item.name}
   className="w-20 h-20 rounded-xl object-cover"
   onError={(e) => {

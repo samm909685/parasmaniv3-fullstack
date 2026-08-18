@@ -8,6 +8,8 @@ const convertHeicToJpg = require("../utils/convertHeic");
 ========================== */
 
 exports.getAllProducts = (req, res) => {
+  const API_URL = `${req.protocol}://${req.get("host")}`;
+
   Product.getAll((err, results) => {
     if (err) {
       return res.status(500).json({
@@ -19,16 +21,16 @@ exports.getAllProducts = (req, res) => {
     const products = results.map((item) => ({
       ...item,
 
-      featured_image: item.featured_image
-        ? `http://localhost:5000/uploads/products/${item.featured_image}`
-        : null,
+     featured_image: item.featured_image
+  ? `${API_URL}/uploads/products/${item.featured_image}`
+  : null,
 
      gallery_images: (() => {
   try {
     return item.gallery_images
       ? JSON.parse(item.gallery_images).map(
           (img) =>
-            `http://localhost:5000/uploads/products/${img}`
+            `${API_URL}/uploads/products/${img}`
         )
       : [];
   } catch (err) {
