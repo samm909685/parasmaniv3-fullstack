@@ -106,7 +106,7 @@ const [selectedId, setSelectedId] = useState(null);
                   <img
  src={
   item.image
-    ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+    ? `https://api.parasmanijewelers.in/uploads/categories/${item.image}`
     : "https://placehold.co/100x100"
 }
   alt={item.name}
@@ -203,7 +203,7 @@ const [selectedId, setSelectedId] = useState(null);
               <img
  src={
   item.image
-    ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+    ? `https://api.parasmanijewelers.in/uploads/categories/${item.image}`
     : "https://placehold.co/100x100"
 }
   alt={item.name}

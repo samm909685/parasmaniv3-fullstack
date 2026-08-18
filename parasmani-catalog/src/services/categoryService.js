@@ -1,4 +1,4 @@
-const API_URL = "https://api.parasmanijewellers.in/api/categories";
+const API_URL = "https://api.parasmanijewelers.in/api/categories";
 
 // ================= GET =================
 

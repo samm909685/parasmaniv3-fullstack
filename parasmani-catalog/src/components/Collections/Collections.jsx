@@ -52,7 +52,7 @@ function Collections() {
               <img
                 src={
                   category.image
-  ? `https://api.parasmanijewellers.in/uploads/categories/${category.image}`
+  ? `https://api.parasmanijewelers.in/uploads/categories/${category.image}`
   : "https://placehold.co/600x700"
                 }
                 

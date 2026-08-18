@@ -78,7 +78,7 @@ function CollectionsLanding() {
                 <img
                   src={
                     item.image
-  ? `https://api.parasmanijewellers.in/uploads/categories/${item.image}`
+  ? `https://api.parasmanijewelers.in/uploads/categories/${item.image}`
   : "https://placehold.co/700x700"
                   }
                   alt={item.name}

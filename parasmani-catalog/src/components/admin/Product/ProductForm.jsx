@@ -47,7 +47,7 @@ useEffect(() => {
 const loadCategories = async () => {
   try {
     const res = await axios.get(
-  "https://api.parasmanijewellers.in/api/categories"
+  "https://api.parasmanijewelers.in/api/categories"
 );
 
     setCategories(res.data.data);
