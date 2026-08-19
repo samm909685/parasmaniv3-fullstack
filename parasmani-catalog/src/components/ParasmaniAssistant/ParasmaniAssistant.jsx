@@ -4,6 +4,18 @@ import { FiMessageCircle, FiX, FiSend } from "react-icons/fi";
 function ParasmaniAssistant() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [sessionId] = useState(() => {
+  const savedSession = localStorage.getItem("parasmani_chat_session");
+
+  if (savedSession) {
+    return savedSession;
+  }
+
+  const newSession = crypto.randomUUID();
+  localStorage.setItem("parasmani_chat_session", newSession);
+
+  return newSession;
+});
 
   const [messages, setMessages] = useState([
     {
@@ -25,73 +37,80 @@ function ParasmaniAssistant() {
     "How can I contact you?",
   ];
 
-  const getDummyResponse = (text) => {
-    const lowerText = text.toLowerCase();
+  
 
-    if (
-      lowerText.includes("collection") ||
-      lowerText.includes("jewellery")
-    ) {
-      return "I'd be happy to help you explore our jewellery collections. Our collection catalog will be connected to me soon.";
-    }
+  const sendMessage = async (text = message) => {
+  const trimmedMessage = text.trim();
 
-    if (
-      lowerText.includes("traditional") ||
-      lowerText.includes("traditional jewellery")
-    ) {
-      return "Parasmani specialises in timeless traditional jewellery inspired by Indian craftsmanship.";
-    }
+  if (!trimmedMessage) return;
 
-    if (
-      lowerText.includes("contact") ||
-      lowerText.includes("whatsapp")
-    ) {
-      return "You can contact Parasmani Jewellers directly through WhatsApp or our Contact page.";
-    }
-
-    if (
-      lowerText.includes("parasmani") ||
-      lowerText.includes("legacy")
-    ) {
-      return "Parasmani Jewellers carries a legacy dating back to 1965, combining traditional craftsmanship with contemporary elegance.";
-    }
-
-    return "I'm currently in my preview mode. Soon I'll be able to understand your jewellery requirements and guide you through the Parasmani catalog.";
+  const userMessage = {
+    id: Date.now(),
+    sender: "user",
+    text: trimmedMessage,
   };
 
-  const sendMessage = (text = message) => {
-    const trimmedMessage = text.trim();
+  setMessages((previous) => [
+    ...previous,
+    userMessage,
+  ]);
 
-    if (!trimmedMessage) return;
+  setMessage("");
 
-    const userMessage = {
-      id: Date.now(),
-      sender: "user",
-      text: trimmedMessage,
+  try {
+    const response = await fetch(
+      "https://sayyamo56.app.n8n.cloud/webhook/5f918827-934f-4eca-9862-72b499b09afb/chat",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "sendMessage",
+          sessionId: sessionId,
+          chatInput: trimmedMessage,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("n8n response:", data);
+
+    const assistantMessage = {
+      id: Date.now() + 1,
+      sender: "assistant",
+      text:
+        data.output ||
+        data.text ||
+        data.response ||
+        "Sorry, I couldn't generate a response right now.",
     };
 
     setMessages((previous) => [
       ...previous,
-      userMessage,
+      assistantMessage,
     ]);
+  } catch (error) {
+    console.error("Parasmani Assistant error:", error);
 
-    setMessage("");
+    const errorMessage = {
+      id: Date.now() + 1,
+      sender: "assistant",
+      text:
+        "Sorry, I'm having trouble connecting right now. Please try again.",
+    };
 
-    // Dummy assistant response
-    setTimeout(() => {
-      const assistantMessage = {
-        id: Date.now() + 1,
-        sender: "assistant",
-        text: getDummyResponse(trimmedMessage),
-      };
-
-      setMessages((previous) => [
-        ...previous,
-        assistantMessage,
-      ]);
-    }, 700);
-  };
-
+    setMessages((previous) => [
+      ...previous,
+      errorMessage,
+    ]);
+  }
+};
   const handleSubmit = (event) => {
     event.preventDefault();
     sendMessage();
