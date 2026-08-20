@@ -32,10 +32,10 @@ function Header() {
         updateFavoriteCount
       );
     };
-  }, []);
+  }, []);;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#5F9E99] via-[#2F6F6A] to-[#123F3B] border-b border-[#123F3B]">
+    <header className="sticky top-0 z-50 w-full bg-[#F8F0E3] border-b border-[#D6C5A3]">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -75,7 +75,7 @@ function Header() {
 
           <div className="hidden lg:flex items-center gap-9">
 
-            <nav className="flex items-center gap-8 text-[15px] text-white">
+            <nav className="flex items-center gap-8 text-[15px]">
 
               <Link to="/" className="hover:text-[#C8A044] transition">
                 Home
@@ -104,7 +104,7 @@ function Header() {
 
             </nav>
 
-            <div className="flex items-center gap-4 text-[20px] text-white">
+            <div className="flex items-center gap-4 text-[20px]">
 
               <button>
                 <FiSearch className="hover:text-[#C8A044]" />
