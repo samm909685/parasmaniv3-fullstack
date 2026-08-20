@@ -32,14 +32,14 @@ function Header() {
         updateFavoriteCount
       );
     };
-  }, []);;
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#F8F0E3] border-b border-[#D6C5A3]">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="h-[80px] md:h-[95px] flex items-center justify-between">
+        <div className="h-[72px] md:h-[82px] flex items-center justify-between">
 
           {/* Logo */}
 
@@ -48,20 +48,20 @@ function Header() {
             <img
               src={logo}
               alt="Parasmani Jewellers"
-              className="w-14 h-14 md:w-[72px] md:h-[72px] object-cover rounded-sm"
+              className="w-12 h-12 md:w-[62px] md:h-[62px] object-cover rounded-sm"
             />
 
             <div className="leading-none">
 
               <h1
-                className="text-[22px] md:text-[34px] font-semibold text-[#D4AF37]"
+                className="text-[20px] md:text-[29px] font-semibold text-[#D4AF37]"
                 style={{ fontFamily: "Cinzel, serif" }}
               >
                 PARASMANI
               </h1>
 
               <p
-                className="text-[10px] md:text-[17px] tracking-[0.25em] md:tracking-[0.30em]"
+                className="text-[9px] md:text-[14px] tracking-[0.25em] md:tracking-[0.28em]"
                 style={{ fontFamily: "Cinzel, serif" }}
               >
                 JEWELLERS
@@ -73,9 +73,9 @@ function Header() {
 
           {/* Desktop */}
 
-          <div className="hidden lg:flex items-center gap-12">
+          <div className="hidden lg:flex items-center gap-9">
 
-            <nav className="flex items-center gap-10 text-[15px]">
+            <nav className="flex items-center gap-8 text-[15px]">
 
               <Link to="/" className="hover:text-[#C8A044] transition">
                 Home
@@ -104,7 +104,7 @@ function Header() {
 
             </nav>
 
-            <div className="flex items-center gap-5 text-[22px]">
+            <div className="flex items-center gap-4 text-[20px]">
 
               <button>
                 <FiSearch className="hover:text-[#C8A044]" />
