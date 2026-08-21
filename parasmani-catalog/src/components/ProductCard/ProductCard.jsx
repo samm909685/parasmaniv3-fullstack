@@ -24,7 +24,7 @@ function ProductCard({ product }) {
         <img
           src={product.featured_image}
           alt={product.name}
-          className="w-full aspect-[4/5] object-cover object-center rounded-3xl hover:scale-105 transition duration-700"
+          className="w-full aspect-square object-cover object-center rounded-3xl hover:scale-105 transition duration-700"
         />
       </div>
 
