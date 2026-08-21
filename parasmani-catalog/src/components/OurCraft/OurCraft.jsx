@@ -8,7 +8,7 @@ import { PiHandsPrayingLight } from "react-icons/pi";
 
 function OurCraft() {
   return (
-    <section className="bg-[#F8F5EE] overflow-hidden">
+    <section className="bg-white overflow-hidden">
 
       {/* ================= HERO ================= */}
 
@@ -67,7 +67,7 @@ function OurCraft() {
 >
 
         <path
-  fill="#F8F5EE"
+  fill="#FFFFFF"
   d="
     M0,140
     C220,60
