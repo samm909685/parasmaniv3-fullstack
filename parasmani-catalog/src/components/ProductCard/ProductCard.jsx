@@ -74,7 +74,7 @@ function ProductCard({ product }) {
 
       <Link
         to={`/product/${product.id}`}
-        className="inline-block mt-6 border border-[#18322F] px-7 py-3 rounded-full hover:bg-[#18322F] hover:text-white transition"
+        className="inline-block mt-4 border border-[#18322F] px-5 py-2 rounded-full text-sm hover:bg-[#18322F] hover:text-white transition"
       >
         View Details →
       </Link>
