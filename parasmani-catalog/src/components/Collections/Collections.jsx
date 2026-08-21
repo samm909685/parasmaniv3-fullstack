@@ -46,7 +46,7 @@ function Collections() {
             <Link
               key={category.id}
               to={`/collections/${category.slug}`}
-              className="group relative h-[420px] sm:h-[500px] md:h-[540px] overflow-hidden rounded-2xl cursor-pointer block"
+              className="group relative h-[360px] sm:h-[400px] md:h-[430px] overflow-hidden rounded-2xl cursor-pointer block"
             >
 
               <img
