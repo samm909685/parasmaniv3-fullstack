@@ -12,7 +12,7 @@ function OurCraft() {
 
       {/* ================= HERO ================= */}
 
-      <div className="relative h-[55vh] sm:h-[65vh] lg:h-[90vh] overflow-hidden">
+      <div className="relative h-[45vh] sm:h-[52vh] lg:h-[65vh] overflow-hidden">
 
         {/* Image */}
 
@@ -26,7 +26,7 @@ function OurCraft() {
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/40 to-black/60"></div>
 
-<div className="absolute inset-0 backdrop-blur-[3px]"></div>
+<div className="absolute inset-0 backdrop-blur-[1px]"></div>
 
         {/* Text */}
 
@@ -34,12 +34,12 @@ function OurCraft() {
 
           <div className="text-center px-6">
 
-            <p
-              className="uppercase tracking-[0.45em] text-[#D8B15C] text-xs md:text-sm"
-              style={{ fontFamily: "Cinzel, serif" }}
-            >
-              OUR CRAFT
-            </p>
+           <p
+  className="uppercase tracking-[0.45em] text-[#18322F] text-xs md:text-sm"
+  style={{ fontFamily: "Cinzel, serif" }}
+>
+  OUR CRAFT
+</p>
 
             <div className="w-24 h-px bg-[#D8B15C] mx-auto my-6"></div>
 
@@ -89,9 +89,9 @@ function OurCraft() {
 
       {/* ================= CONTENT ================= */}
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-20">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-14">
 
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
 
           {/* LEFT */}
 
@@ -105,7 +105,7 @@ function OurCraft() {
             </p>
 
             <h2
-              className="mt-5 text-4xl lg:text-6xl text-[#18322F] leading-tight"
+              className="mt-5 text-3xl lg:text-5xl text-[#18322F] leading-tight"
               style={{ fontFamily: "Cinzel, serif" }}
             >
               Jewellery Crafted
@@ -115,7 +115,7 @@ function OurCraft() {
 
             <div className="w-24 h-[2px] bg-[#C8A044] my-8"></div>
 
-            <p className="text-gray-600 text-lg leading-9">
+            <p className="text-gray-600 text-base lg:text-lg leading-7">
 
               Every necklace, thushi and traditional
               wax bead ornament reflects generations
@@ -168,9 +168,9 @@ function OurCraft() {
 
                 <div className="flex justify-center">
 
-                  <div className="w-20 h-20 rounded-full border border-[#D8B15C] flex items-center justify-center group-hover:bg-[#18322F] transition duration-300">
+                  <div className="w-16 h-16 rounded-full border border-[#D8B15C] flex items-center justify-center group-hover:bg-[#18322F] transition duration-300">
 
-                    <div className="text-[#D8B15C] text-4xl group-hover:text-white transition">
+                    <div className="text-[#D8B15C] text-3xl group-hover:text-white transition">
 
                       {item.icon}
 
@@ -181,7 +181,7 @@ function OurCraft() {
                 </div>
 
                 <h3
-                  className="mt-6 text-2xl text-[#18322F]"
+                  className="mt-4 text-xl text-[#18322F]"
                   style={{ fontFamily: "Cinzel, serif" }}
                 >
                   {item.title}
