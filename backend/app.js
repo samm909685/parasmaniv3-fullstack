@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const UPLOAD_ROOT =
   process.env.UPLOAD_ROOT ||
-  "/home/u161150306/domains/api.parasmanijewelers.in/uploads";
+  path.join(__dirname, "uploads");
 
 
 /* ==========================
