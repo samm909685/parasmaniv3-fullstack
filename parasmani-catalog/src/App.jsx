@@ -11,6 +11,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Categories from "./pages/admin/Categories";
 import Products from "./pages/admin/Products";
 import Media from "./pages/admin/Media";
+import DesignRequests from "./pages/admin/DesignRequests";
 import Settings from "./pages/admin/Settings";
 
 import CustomerLayout from "./layouts/CustomerLayout";
@@ -80,6 +81,11 @@ function App() {
         path="/admin/media"
         element={<Media />}
       />
+
+      <Route
+  path="/admin/design-requests"
+  element={<DesignRequests />}
+/>
 
       <Route
         path="/admin/settings"

@@ -4,6 +4,7 @@ import {
   FolderKanban,
   Gem,
   Image,
+  MessageSquareText,
   Settings,
   LogOut,
   X,
@@ -30,6 +31,13 @@ const menu = [
     icon: <Image size={20} />,
     link: "/admin/media",
   },
+
+  {
+  title: "Design Requests",
+  icon: <MessageSquareText size={20} />,
+  link: "/admin/design-requests",
+  },
+
   {
     title: "Settings",
     icon: <Settings size={20} />,
