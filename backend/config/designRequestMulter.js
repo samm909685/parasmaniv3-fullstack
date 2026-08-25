@@ -2,10 +2,12 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+const UPLOAD_ROOT =
+  process.env.UPLOAD_ROOT ||
+  path.join(__dirname, "..", "uploads");
+
 const uploadDir = path.join(
-  __dirname,
-  "..",
-  "uploads",
+  UPLOAD_ROOT,
   "design-requests"
 );
 

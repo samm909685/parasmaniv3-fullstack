@@ -33,8 +33,8 @@ function DesignRequests() {
       setError("");
 
       const response = await fetch(
-        "http://localhost:5000/api/design-requests"
-      );
+  "https://api.parasmanijewelers.in/api/design-requests"
+);
 
       const data = await response.json();
 
@@ -85,15 +85,21 @@ function DesignRequests() {
   // IMAGE URL
   // ==========================================
 
-  const getImageUrl = (image) => {
-    if (!image) return null;
+ const getImageUrl = (image) => {
+  if (!image) return null;
 
-    if (image.startsWith("http")) {
-      return image;
-    }
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
 
-    return `http://localhost:5000/${image.replace(/^\/+/, "")}`;
-  };
+  return `https://api.parasmanijewelers.in/${image.replace(
+    /^\/+/,
+    ""
+  )}`;
+};
 
   // ==========================================
   // WHATSAPP
