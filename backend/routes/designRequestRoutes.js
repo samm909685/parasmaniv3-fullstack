@@ -2,15 +2,22 @@ const express = require("express");
 
 const router = express.Router();
 
-const uploadDesignRequest = require("../config/designRequestMulter");
+const uploadDesignRequest = require(
+  "../config/designRequestMulter"
+);
+
 
 const {
   createDesignRequest,
   getAllDesignRequests,
   getDesignRequestById,
   updateDesignRequestStatus,
+  markDesignRequestAsRead,
+  getUnreadDesignRequestCount,
   deleteDesignRequest,
-} = require("../controllers/designRequestController");
+} = require(
+  "../controllers/designRequestController"
+);
 
 
 /* ==========================
@@ -19,7 +26,9 @@ const {
 
 router.post(
   "/",
-  uploadDesignRequest.single("reference_image"),
+  uploadDesignRequest.single(
+    "reference_image"
+  ),
   createDesignRequest
 );
 
@@ -35,12 +44,32 @@ router.get(
 
 
 /* ==========================
+   GET UNREAD COUNT
+========================== */
+
+router.get(
+  "/unread-count",
+  getUnreadDesignRequestCount
+);
+
+
+/* ==========================
    GET SINGLE REQUEST
 ========================== */
 
 router.get(
   "/:id",
   getDesignRequestById
+);
+
+
+/* ==========================
+   MARK AS READ
+========================== */
+
+router.patch(
+  "/:id/read",
+  markDesignRequestAsRead
 );
 
 
