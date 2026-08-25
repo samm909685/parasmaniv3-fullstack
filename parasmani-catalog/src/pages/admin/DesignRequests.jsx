@@ -634,9 +634,23 @@ function DesignRequests() {
                       <div className="flex justify-end gap-2">
 
                         <button
-                          onClick={() =>
-                            setSelectedRequest(request)
-                          }
+                         onClick={async () => {
+  try {
+    await fetch(
+      `https://api.parasmanijewelers.in/api/design-requests/${request.id}/read`,
+      {
+        method: "PATCH",
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Failed to mark request as read:",
+      error
+    );
+  }
+
+  setSelectedRequest(request);
+}}
                           title="View request"
                           className="
                             w-10

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -47,6 +48,41 @@ const menu = [
 
 function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
+
+  const [unreadDesignRequests, setUnreadDesignRequests] =
+    useState(0);
+
+  useEffect(() => {
+    const fetchUnreadDesignRequests = async () => {
+      try {
+        const response = await fetch(
+          "https://api.parasmanijewelers.in/api/design-requests/unread-count"
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        setUnreadDesignRequests(
+          Number(data.unread_count) || 0
+        );
+      } catch (error) {
+        console.error(
+          "Failed to fetch unread design requests:",
+          error
+        );
+      }
+    };
+
+    fetchUnreadDesignRequests();
+
+    const interval = setInterval(
+      fetchUnreadDesignRequests,
+      10000
+    );
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -131,9 +167,34 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 }
               `}
             >
-              {item.icon}
+             {item.icon}
 
-              <span>{item.title}</span>
+<span className="flex-1">
+  {item.title}
+</span>
+
+{item.title === "Design Requests" &&
+  unreadDesignRequests > 0 && (
+    <span
+      className="
+        min-w-[24px]
+        h-6
+        px-1.5
+        rounded-full
+        bg-[#D8B15C]
+        text-[#18322F]
+        text-xs
+        font-bold
+        flex
+        items-center
+        justify-center
+      "
+    >
+      {unreadDesignRequests > 99
+        ? "99+"
+        : unreadDesignRequests}
+    </span>
+  )}
 
             </Link>
 
