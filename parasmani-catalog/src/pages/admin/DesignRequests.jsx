@@ -13,6 +13,7 @@ import {
   Phone,
   Gem,
   Clock,
+  Trash2,
 } from "lucide-react";
 
 function DesignRequests() {
@@ -22,6 +23,8 @@ function DesignRequests() {
 
   const [search, setSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [deletingRequestId, setDeletingRequestId] =
+  useState(null);
 
   // ==========================================
   // FETCH DESIGN REQUESTS
@@ -119,6 +122,61 @@ function DesignRequests() {
       "_blank"
     );
   };
+
+// ==========================================
+// DELETE REQUEST
+// ==========================================
+
+const handleDeleteRequest = async (request) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete Request #${request.id}?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setDeletingRequestId(request.id);
+
+    const response = await fetch(
+      `https://api.parasmanijewelers.in/api/design-requests/${request.id}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Failed to delete request."
+      );
+    }
+
+    setRequests((prevRequests) =>
+      prevRequests.filter(
+        (item) => item.id !== request.id
+      )
+    );
+
+    if (selectedRequest?.id === request.id) {
+      setSelectedRequest(null);
+    }
+  } catch (error) {
+    console.error(
+      "Delete design request error:",
+      error
+    );
+
+    alert(
+      error.message ||
+        "Unable to delete design request."
+    );
+  } finally {
+    setDeletingRequestId(null);
+  }
+};
+
+
 
   // ==========================================
   // STATUS
@@ -691,8 +749,40 @@ function DesignRequests() {
                           "
                         >
                           <MessageCircle size={18} />
-                        </button>
+                                                </button>
 
+                        <button
+                          onClick={() =>
+                            handleDeleteRequest(request)
+                          }
+                          disabled={
+                            deletingRequestId === request.id
+                          }
+                          title="Delete request"
+                          className="
+                            w-10
+                            h-10
+                            rounded-full
+                            border
+                            border-red-200
+                            text-red-600
+                            flex
+                            items-center
+                            justify-center
+                            hover:bg-red-50
+                            transition
+                            disabled:opacity-50
+                          "
+                        >
+                          <Trash2
+                            size={18}
+                            className={
+                              deletingRequestId === request.id
+                                ? "animate-pulse"
+                                : ""
+                            }
+                          />
+                        </button>
                       </div>
 
                     </td>
