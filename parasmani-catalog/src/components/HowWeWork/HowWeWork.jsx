@@ -199,7 +199,7 @@ function HowWeWork() {
   };
 
   return (
-    <section className="bg-white py-16 sm:py-20 lg:py-24">
+    <section className="bg-[#F5EFE3] py-16 sm:py-20 lg:py-24">
 
       {/* ==========================
           SECTION HEADER
@@ -249,7 +249,7 @@ function HowWeWork() {
               LEFT — REFERENCE IMAGE
           ========================== */}
 
-          <div className="bg-[#FCFAF6] rounded-2xl border border-[#E4D8C2] p-5 sm:p-7 shadow-sm">
+          <div className="bg-white rounded-2xl border border-[#E4D8C2] p-5 sm:p-7 shadow-sm">
 
             <div className="mb-5">
 
@@ -380,7 +380,7 @@ function HowWeWork() {
               RIGHT — FORM
           ========================== */}
 
-          <div className="bg-[#FCFAF6] rounded-2xl border border-[#E4D8C2] p-5 sm:p-7 lg:p-8 shadow-sm">
+          <div className="bg-white rounded-2xl border border-[#E4D8C2] p-5 sm:p-7 lg:p-8 shadow-sm">
 
             <form onSubmit={handleSubmit}>
 
