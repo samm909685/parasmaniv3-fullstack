@@ -201,137 +201,162 @@ function Collections() {
 
         <div className="sm:hidden flex flex-col gap-3.5 mt-8">
 
-          {featuredCategories.map((category) => (
+          {featuredCategories.map((category, index) => (
 
-            <Link
-              key={category.id}
-              to={`/collections/${category.slug}`}
-              className="
-                group
-                flex
-                items-center
-                w-full
-                min-h-[104px]
-                rounded-full
-                border
-                border-[#DDBB70]
-                bg-white
-                p-2.5
-                shadow-[0_3px_15px_rgba(180,140,50,0.06)]
-                active:scale-[0.985]
-                transition-transform
-              "
-            >
+           <Link
+  key={category.id}
+  to={`/collections/${category.slug}`}
+  className={`
+    group
+    flex
+    items-center
+    w-full
+    min-h-[104px]
+    rounded-full
+    border
+    border-[#DDBB70]
+    bg-white
+    p-2.5
+    shadow-[0_3px_15px_rgba(180,140,50,0.06)]
+    active:scale-[0.985]
+    transition-transform
+    ${index % 2 !== 0 ? "flex-row-reverse" : ""}
+  `}
+>
+  {/* MOBILE IMAGE */}
 
-              {/* MOBILE IMAGE */}
-
-              <div
-                className="
-                  flex-shrink-0
-                  w-[82px]
-                  h-[82px]
-                  rounded-full
-                  overflow-hidden
-                  border
-                  border-[#DDBB70]
-                  bg-[#F8F4EA]
-                "
-              >
-
-                <img
-                  src={
-                    category.image
-                      ? `https://api.parasmanijewelers.in/uploads/categories/${category.image}`
-                      : "https://placehold.co/500x500"
-                  }
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                />
-
-              </div>
-
-
-              {/* MOBILE TEXT */}
-
-              <div className="flex-1 min-w-0 px-3">
-
-                <div className="flex items-center gap-1.5 mb-1">
-
-                  <Flower2
-                    size={13}
-                    strokeWidth={1.2}
-                    className="text-[#C8A044]"
-                  />
-
-                  <span className="
-                    text-[8px]
-                    uppercase
-                    tracking-[0.18em]
-                    text-[#A77A24]
-                  ">
-                    Collection
-                  </span>
-
-                </div>
-
-                <h3
-                  className="
-                    text-lg
-                    text-[#18322F]
-                    truncate
-                  "
-                  style={{ fontFamily: "Cinzel, serif" }}
-                >
-                  {category.name}
-                </h3>
-
-                <div className="
-                  mt-1.5
-                  flex
-                  items-center
-                  gap-1.5
-                  text-[#A77A24]
-                  text-[10px]
-                ">
-
-                  <span>Explore Collection</span>
-
-                  <ArrowRight
-                    size={13}
-                    strokeWidth={1.4}
-                  />
-
-                </div>
-
-              </div>
+  <div
+    className="
+      flex-shrink-0
+      w-[82px]
+      h-[82px]
+      rounded-full
+      overflow-hidden
+      border
+      border-[#DDBB70]
+      bg-[#F8F4EA]
+    "
+  >
+    <img
+      src={
+        category.image
+          ? `https://api.parasmanijewelers.in/uploads/categories/${category.image}`
+          : "https://placehold.co/500x500"
+      }
+      alt={category.name}
+      className="
+        w-full
+        h-full
+        object-cover
+      "
+    />
+  </div>
 
 
-              {/* MOBILE ARROW */}
+  {/* MOBILE CONTENT */}
 
-              <div
-                className="
-                  flex-shrink-0
-                  w-8
-                  h-8
-                  mr-1
-                  rounded-full
-                  border
-                  border-[#D9B566]
-                  flex
-                  items-center
-                  justify-center
-                  text-[#A77A24]
-                "
-              >
+ <div
+  className={`
+    flex-1
+    min-w-0
+    px-3
+    ${index % 2 !== 0 ? "text-right pr-4" : "text-left pl-4"}
+  `}
 
-                <ArrowRight
-                  size={15}
-                  strokeWidth={1.4}
-                />
+  >
 
-              </div>
+    <div
+      className={`
+        flex
+        items-center
+        gap-1.5
+        mb-1
+        ${index % 2 !== 0 ? "justify-end" : "justify-start"}
+      `}
+    >
 
-            </Link>
+      <Flower2
+        size={13}
+        strokeWidth={1.2}
+        className="text-[#C8A044]"
+      />
+
+      <span
+        className="
+          text-[8px]
+          uppercase
+          tracking-[0.18em]
+          text-[#A77A24]
+        "
+      >
+        Collection
+      </span>
+
+    </div>
+
+
+    <h3
+      className="
+        text-lg
+        text-[#18322F]
+        truncate
+      "
+      style={{ fontFamily: "Cinzel, serif" }}
+    >
+      {category.name}
+    </h3>
+
+
+    <div
+      className={`
+        mt-1.5
+        flex
+        items-center
+        gap-1.5
+        text-[#A77A24]
+        text-[10px]
+        ${index % 2 !== 0 ? "justify-end" : "justify-start"}
+      `}
+    >
+
+      <span>
+        Explore Collection
+      </span>
+
+      <ArrowRight
+        size={13}
+        strokeWidth={1.4}
+      />
+
+    </div>
+
+  </div>
+
+
+  {/* MOBILE ARROW */}
+
+  <div
+    className="
+      flex-shrink-0
+      w-8
+      h-8
+      mr-1
+      rounded-full
+      border
+      border-[#D9B566]
+      flex
+      items-center
+      justify-center
+      text-[#A77A24]
+    "
+  >
+    <ArrowRight
+      size={15}
+      strokeWidth={1.4}
+    />
+  </div>
+
+</Link>
 
           ))}
 
