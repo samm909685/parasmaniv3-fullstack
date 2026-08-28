@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Image as ImageIcon } from "lucide-react";
 import axios from "axios";
 
 import {
@@ -13,154 +13,210 @@ function ProductForm({
   editingProduct,
   refreshProducts,
 }) {
+  const [categories, setCategories] = useState([]);
 
-    const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState("");
+  const [name, setName] = useState("");
+  const [productCode, setProductCode] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [weight, setWeight] = useState("");
+  const [purity, setPurity] = useState("");
 
-const [categoryId, setCategoryId] = useState("");
+  const [featuredImage, setFeaturedImage] = useState(null);
+  const [featuredImagePreview, setFeaturedImagePreview] = useState(null);
 
-const [name, setName] = useState("");
+  const [galleryImages, setGalleryImages] = useState([]);
 
-const [productCode, setProductCode] = useState("");
+  const [featured, setFeatured] = useState(false);
+  const [status, setStatus] = useState(true);
 
-const [slug, setSlug] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const [description, setDescription] = useState("");
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
-const [weight, setWeight] = useState("");
+  const loadCategories = async () => {
+    try {
+      const res = await axios.get(
+        "https://api.parasmanijewelers.in/api/categories"
+      );
 
-const [purity, setPurity] = useState("");
+      setCategories(res.data.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
-const [featuredImage, setFeaturedImage] = useState(null);
+  const resetForm = () => {
+    setCategoryId("");
+    setName("");
+    setProductCode("");
+    setSlug("");
+    setDescription("");
+    setWeight("");
+    setPurity("");
 
-const [galleryImages, setGalleryImages] = useState([]);
-
-const [featured, setFeatured] = useState(false);
-
-const [status, setStatus] = useState(true);
-
-const [loading, setLoading] = useState(false);
-
-useEffect(() => {
-  loadCategories();
-}, []);
-
-const loadCategories = async () => {
-  try {
-    const res = await axios.get(
-  "https://api.parasmanijewelers.in/api/categories"
-);
-
-    setCategories(res.data.data);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const resetForm = () => {
-  setCategoryId("");
-  setName("");
-  setProductCode("");
-  setSlug("");
-  setDescription("");
-  setWeight("");
-  setPurity("");
-  setFeaturedImage(null);
-  setGalleryImages([]);
-  setFeatured(false);
-  setStatus(true);
-};
-
-useEffect(() => {
-  if (editingProduct) {
-    setCategoryId(editingProduct.category_id || "");
-    setName(editingProduct.name || "");
-    setProductCode(editingProduct.product_code || "");
-    setSlug(editingProduct.slug || "");
-    setDescription(editingProduct.description || "");
-    setWeight(editingProduct.weight || "");
-    setPurity(editingProduct.purity || "");
-    setFeatured(Boolean(editingProduct.featured));
-    setStatus(Boolean(editingProduct.status));
     setFeaturedImage(null);
+    setFeaturedImagePreview(null);
+
     setGalleryImages([]);
-  } else {
-    resetForm();
-  }
-}, [editingProduct]);
 
-const handleSubmit = async () => {
-  if (!name.trim()) {
-    alert("Product Name is required");
-    return;
-  }
+    setFeatured(false);
+    setStatus(true);
+  };
 
-  if (!categoryId) {
-    alert("Please select a category");
-    return;
-  }
+  /* =========================================================
+     LOAD PRODUCT WHEN EDITING
+  ========================================================== */
 
-  try {
-    setLoading(true);
-
-    const formData = new FormData();
-
-    formData.append("category_id", categoryId);
-    formData.append("name", name);
-    formData.append("product_code", productCode);
-    formData.append("slug", slug);
-    formData.append("description", description);
-    formData.append("weight", weight);
-    formData.append("purity", purity);
-    formData.append("featured", featured);
-    formData.append("status", status);
-    formData.append("display_order", 0);
-
-    if (featuredImage) {
-      formData.append("featured_image", featuredImage);
-    }
-
-    galleryImages.forEach((img) => {
-      formData.append("gallery_images", img);
-    });
-
-    let result;
-
+  useEffect(() => {
     if (editingProduct) {
-      result = await updateProduct(
-        editingProduct.id,
-        formData
+      setCategoryId(editingProduct.category_id || "");
+      setName(editingProduct.name || "");
+      setProductCode(editingProduct.product_code || "");
+      setSlug(editingProduct.slug || "");
+      setDescription(editingProduct.description || "");
+      setWeight(editingProduct.weight || "");
+      setPurity(editingProduct.purity || "");
+
+      setFeatured(Boolean(editingProduct.featured));
+      setStatus(Boolean(editingProduct.status));
+
+      /*
+        IMPORTANT:
+
+        Do NOT clear the existing image preview.
+
+        editingProduct.featured_image is already returned
+        by your API as the complete image URL.
+      */
+
+      setFeaturedImage(null);
+      setFeaturedImagePreview(
+        editingProduct.featured_image || null
       );
+
+      /*
+        We don't replace existing gallery images here.
+        The backend will preserve them if no new gallery
+        images are uploaded.
+      */
+
+      setGalleryImages([]);
     } else {
-      result = await createProduct(formData);
-    }
-
-    if (result.success) {
-      alert(
-        editingProduct
-          ? "Product Updated Successfully"
-          : "Product Added Successfully"
-      );
-
       resetForm();
-
-     if (refreshProducts) {
-  refreshProducts();
-}
-
-      onClose();
-    } else {
-      alert(result.message);
     }
-  } catch (err) {
-    console.log(err);
+  }, [editingProduct]);
 
-    alert("Failed to save product");
-  } finally {
-    setLoading(false);
-  }
-};
+  /* =========================================================
+     FEATURED IMAGE CHANGE
+  ========================================================== */
 
+  const handleFeaturedImageChange = (e) => {
+    const file = e.target.files?.[0];
 
+    if (!file) return;
+
+    setFeaturedImage(file);
+
+    /*
+      Show newly selected image immediately.
+    */
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setFeaturedImagePreview(previewUrl);
+  };
+
+  /* =========================================================
+     SUBMIT
+  ========================================================== */
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      alert("Product Name is required");
+      return;
+    }
+
+    if (!categoryId) {
+      alert("Please select a category");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+
+      formData.append("category_id", categoryId);
+      formData.append("name", name);
+      formData.append("product_code", productCode);
+      formData.append("slug", slug);
+      formData.append("description", description);
+      formData.append("weight", weight);
+      formData.append("purity", purity);
+      formData.append("featured", featured);
+      formData.append("status", status);
+      formData.append("display_order", 0);
+
+      /*
+        IMPORTANT:
+
+        Only send featured_image when the admin
+        actually selected a NEW image.
+
+        If no new image is selected, the backend
+        will preserve the existing image.
+      */
+
+      if (featuredImage) {
+        formData.append(
+          "featured_image",
+          featuredImage
+        );
+      }
+
+      galleryImages.forEach((img) => {
+        formData.append("gallery_images", img);
+      });
+
+      let result;
+
+      if (editingProduct) {
+        result = await updateProduct(
+          editingProduct.id,
+          formData
+        );
+      } else {
+        result = await createProduct(formData);
+      }
+
+      if (result.success) {
+        alert(
+          editingProduct
+            ? "Product Updated Successfully"
+            : "Product Added Successfully"
+        );
+
+        resetForm();
+
+        if (refreshProducts) {
+          refreshProducts();
+        }
+
+        onClose();
+      } else {
+        alert(result.message);
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Failed to save product");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!open) return null;
 
@@ -187,11 +243,15 @@ const handleSubmit = async () => {
               className="text-2xl text-[#18322F]"
               style={{ fontFamily: "Cinzel, serif" }}
             >
-              Add Product
+              {editingProduct
+                ? "Edit Product"
+                : "Add Product"}
             </h2>
 
             <p className="text-gray-500 mt-1">
-              Create a new jewellery product.
+              {editingProduct
+                ? "Update your jewellery product."
+                : "Create a new jewellery product."}
             </p>
 
           </div>
@@ -205,9 +265,12 @@ const handleSubmit = async () => {
 
         </div>
 
+
         <div className="p-6 space-y-6">
 
-          {/* Featured Image */}
+          {/* =================================================
+              FEATURED IMAGE
+          ================================================== */}
 
           <div>
 
@@ -215,28 +278,106 @@ const handleSubmit = async () => {
               Featured Image
             </label>
 
-            <label className="border-2 border-dashed rounded-2xl h-48 flex flex-col justify-center items-center cursor-pointer hover:border-[#18322F]">
+            <label
+              className="
+                relative
+                border-2
+                border-dashed
+                rounded-2xl
+                min-h-48
+                flex
+                flex-col
+                justify-center
+                items-center
+                cursor-pointer
+                overflow-hidden
+                hover:border-[#18322F]
+                transition
+              "
+            >
 
-              <Upload size={34} className="text-gray-400" />
+              {featuredImagePreview ? (
 
-              <span className="mt-3 text-gray-500">
-                {featuredImage
-  ? featuredImage.name
-  : "Upload Featured Image"}
-              </span>
+                <div className="relative w-full h-48">
+
+                  <img
+                    src={featuredImagePreview}
+                    alt="Featured product"
+                    className="
+                      w-full
+                      h-full
+                      object-contain
+                      rounded-xl
+                    "
+                  />
+
+                  {/* Change Image overlay */}
+
+                  <div
+                    className="
+                      absolute
+                      inset-0
+                      bg-black/0
+                      hover:bg-black/30
+                      transition
+                      flex
+                      items-center
+                      justify-center
+                    "
+                  >
+
+                    <span
+                      className="
+                        opacity-0
+                        hover:opacity-100
+                        bg-white
+                        px-4
+                        py-2
+                        rounded-full
+                        text-sm
+                        shadow
+                      "
+                    >
+                      Change Image
+                    </span>
+
+                  </div>
+
+                </div>
+
+              ) : (
+
+                <>
+                  <ImageIcon
+                    size={34}
+                    className="text-gray-400"
+                  />
+
+                  <span className="mt-3 text-gray-500">
+                    Upload Featured Image
+                  </span>
+                </>
+
+              )}
 
               <input
-  type="file"
-  className="hidden"
-  accept="image/*"
-  onChange={(e) =>
-    setFeaturedImage(e.target.files[0])
-  }
-/>
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFeaturedImageChange}
+              />
 
             </label>
 
+            {editingProduct && featuredImagePreview && (
+              <p className="text-xs text-gray-500 mt-2">
+                Existing image will be kept unless you
+                select a new image.
+              </p>
+            )}
+
           </div>
+
 
           {/* Gallery */}
 
@@ -247,16 +388,19 @@ const handleSubmit = async () => {
             </label>
 
             <input
-  type="file"
-  multiple
-  accept="image/*"
-  className="w-full border rounded-xl p-3"
-  onChange={(e) =>
-    setGalleryImages([...e.target.files])
-  }
-/>
+              type="file"
+              multiple
+              accept="image/*"
+              className="w-full border rounded-xl p-3"
+              onChange={(e) =>
+                setGalleryImages([
+                  ...e.target.files,
+                ])
+              }
+            />
 
           </div>
+
 
           {/* Product Name */}
 
@@ -266,22 +410,31 @@ const handleSubmit = async () => {
               Product Name
             </label>
 
-          <input
-  type="text"
-  value={name}
-  onChange={(e) => {
-    setName(e.target.value);
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
 
-    setSlug(
-      e.target.value
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-    );
-  }}
-  className="w-full border rounded-xl px-4 py-3 outline-none focus:border-[#18322F]"
-/>
+                setSlug(
+                  e.target.value
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")
+                );
+              }}
+              className="
+                w-full
+                border
+                rounded-xl
+                px-4
+                py-3
+                outline-none
+                focus:border-[#18322F]
+              "
+            />
 
           </div>
+
 
           {/* Product Code */}
 
@@ -291,16 +444,25 @@ const handleSubmit = async () => {
               Product Code
             </label>
 
-           <input
-  type="text"
-  value={productCode}
-  onChange={(e) =>
-    setProductCode(e.target.value)
-  }
-  className="w-full border rounded-xl px-4 py-3 outline-none focus:border-[#18322F]"
-/>
+            <input
+              type="text"
+              value={productCode}
+              onChange={(e) =>
+                setProductCode(e.target.value)
+              }
+              className="
+                w-full
+                border
+                rounded-xl
+                px-4
+                py-3
+                outline-none
+                focus:border-[#18322F]
+              "
+            />
 
           </div>
+
 
           {/* Category */}
 
@@ -311,67 +473,94 @@ const handleSubmit = async () => {
             </label>
 
             <select
-  value={categoryId}
-  onChange={(e) =>
-    setCategoryId(e.target.value)
-  }
-  className="w-full border rounded-xl px-4 py-3"
->
-  <option value="">
-    Select Category
-  </option>
+              value={categoryId}
+              onChange={(e) =>
+                setCategoryId(e.target.value)
+              }
+              className="
+                w-full
+                border
+                rounded-xl
+                px-4
+                py-3
+              "
+            >
 
-  {categories.map((category) => (
-    <option
-      key={category.id}
-      value={category.id}
-    >
-      {category.name}
-    </option>
-  ))}
-</select>
+              <option value="">
+                Select Category
+              </option>
+
+              {categories.map((category) => (
+
+                <option
+                  key={category.id}
+                  value={category.id}
+                >
+                  {category.name}
+                </option>
+
+              ))}
+
+            </select>
 
           </div>
 
+
+          {/* Weight + Purity */}
+
           <div className="grid md:grid-cols-2 gap-5">
 
-  <div>
+            <div>
 
-    <label className="block font-medium mb-2">
-      Weight
-    </label>
+              <label className="block font-medium mb-2">
+                Weight
+              </label>
 
-    <input
-      type="text"
-      value={weight}
-      onChange={(e) =>
-        setWeight(e.target.value)
-      }
-      placeholder="10 gm"
-      className="w-full border rounded-xl px-4 py-3"
-    />
+              <input
+                type="text"
+                value={weight}
+                onChange={(e) =>
+                  setWeight(e.target.value)
+                }
+                placeholder="10 gm"
+                className="
+                  w-full
+                  border
+                  rounded-xl
+                  px-4
+                  py-3
+                "
+              />
 
-  </div>
+            </div>
 
-  <div>
 
-    <label className="block font-medium mb-2">
-      Purity
-    </label>
+            <div>
 
-    <input
-      type="text"
-      value={purity}
-      onChange={(e) =>
-        setPurity(e.target.value)
-      }
-      placeholder="22K"
-      className="w-full border rounded-xl px-4 py-3"
-    />
+              <label className="block font-medium mb-2">
+                Purity
+              </label>
 
-  </div>
+              <input
+                type="text"
+                value={purity}
+                onChange={(e) =>
+                  setPurity(e.target.value)
+                }
+                placeholder="22K"
+                className="
+                  w-full
+                  border
+                  rounded-xl
+                  px-4
+                  py-3
+                "
+              />
 
-</div>
+            </div>
+
+          </div>
+
 
           {/* Description */}
 
@@ -382,15 +571,22 @@ const handleSubmit = async () => {
             </label>
 
             <textarea
-  rows="5"
-  value={description}
-  onChange={(e) =>
-    setDescription(e.target.value)
-  }
-  className="w-full border rounded-xl px-4 py-3"
-/>
+              rows="5"
+              value={description}
+              onChange={(e) =>
+                setDescription(e.target.value)
+              }
+              className="
+                w-full
+                border
+                rounded-xl
+                px-4
+                py-3
+              "
+            />
 
           </div>
+
 
           {/* Featured */}
 
@@ -408,16 +604,17 @@ const handleSubmit = async () => {
 
             </div>
 
-           <input
-  type="checkbox"
-  checked={featured}
-  onChange={(e) =>
-    setFeatured(e.target.checked)
-  }
-  className="w-5 h-5"
-/>
+            <input
+              type="checkbox"
+              checked={featured}
+              onChange={(e) =>
+                setFeatured(e.target.checked)
+              }
+              className="w-5 h-5"
+            />
 
           </div>
+
 
           {/* Status */}
 
@@ -436,50 +633,73 @@ const handleSubmit = async () => {
             </div>
 
             <input
-  type="checkbox"
-  checked={status}
-  onChange={(e) =>
-    setStatus(e.target.checked)
-  }
-  className="w-5 h-5"
-/>
+              type="checkbox"
+              checked={status}
+              onChange={(e) =>
+                setStatus(e.target.checked)
+              }
+              className="w-5 h-5"
+            />
 
           </div>
 
         </div>
 
+
         {/* Footer */}
 
-        <div className="sticky bottom-0 bg-white border-t p-6 flex gap-4">
-
-         <button
-  onClick={() => {
-    resetForm();
-    onClose();
-  }}
-  className="flex-1 border rounded-xl py-3 hover:bg-gray-100"
->
-  Cancel
-</button>
+        <div className="
+          sticky
+          bottom-0
+          bg-white
+          border-t
+          p-6
+          flex
+          gap-4
+        ">
 
           <button
-  onClick={handleSubmit}
-  disabled={loading}
-  className="flex-1 bg-[#18322F] text-white rounded-xl py-3 hover:bg-[#244744] disabled:opacity-50"
->
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            className="
+              flex-1
+              border
+              rounded-xl
+              py-3
+              hover:bg-gray-100
+            "
+          >
+            Cancel
+          </button>
 
-  {loading
-    ? "Saving..."
-    : editingProduct
-    ? "Update Product"
-    : "Save Product"}
 
-</button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="
+              flex-1
+              bg-[#18322F]
+              text-white
+              rounded-xl
+              py-3
+              hover:bg-[#244744]
+              disabled:opacity-50
+            "
+          >
+
+            {loading
+              ? "Saving..."
+              : editingProduct
+              ? "Update Product"
+              : "Save Product"}
+
+          </button>
 
         </div>
 
       </div>
-
     </>
   );
 }
