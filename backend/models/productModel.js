@@ -68,82 +68,78 @@ const Product = {
     );
   },
 
+// ==========================
+// UPDATE PRODUCT
+// ==========================
 
-  // ==========================
-  // UPDATE PRODUCT
-  // ==========================
+update(id, product, callback) {
 
-  update(id, product, callback) {
+  const sql = `
+    UPDATE products
+    SET
+      category_id = ?,
+      name = ?,
+      product_code = ?,
+      slug = ?,
+      description = ?,
+      featured_image = ?,
+      gallery_images = ?,
+      weight = ?,
+      purity = ?,
+      featured = ?,
+      status = ?,
+      display_order = ?
+    WHERE id = ?
+  `;
 
-    const sql = `
-      UPDATE products
-      SET
-        category_id = ?,
-        name = ?,
-        product_code = ?,
-        slug = ?,
-        description = ?,
-        featured_image = ?,
-        gallery_images = ?,
-        weight = ?,
-        purity = ?,
-        featured = ?,
-        status = ?,
-        display_order = ?
-      WHERE id = ?
-    `;
+  const values = [
+    product.category_id,
+    product.name,
+    product.product_code,
+    product.slug,
+    product.description,
+    product.featured_image,
+    product.gallery_images,
+    product.weight,
+    product.purity,
+    product.featured,
+    product.status,
+    product.display_order,
+    id
+  ];
 
+  console.log("=================================");
+  console.log("🔥 UPDATE PRODUCT MODEL CALLED");
+  console.log("🔥 PRODUCT ID:", id);
+  console.log("🔥 PRODUCT DATA:", JSON.stringify(product));
+  console.log("🔥 SQL VALUES:", JSON.stringify(values));
 
-    // DEBUG LOGS
-    console.log("=================================");
-    console.log("🔥 UPDATE PRODUCT MODEL CALLED");
-    console.log("🔥 PRODUCT ID:", id);
-    console.log("🔥 PRODUCT DATA:", product);
-    console.log("🔥 SQL:", sql);
-    console.log("=================================");
+  // Show the EXACT SQL mysql2 will generate
+  try {
+    console.log("🔥 FINAL SQL:");
+    console.log(db.format(sql, values));
+  } catch (formatError) {
+    console.error("❌ SQL FORMAT ERROR:", formatError);
+  }
 
+  console.log("=================================");
 
-    const values = [
-      product.category_id,
-      product.name,
-      product.product_code,
-      product.slug,
-      product.description,
-      product.featured_image,
-      product.gallery_images,
-      product.weight,
-      product.purity,
-      product.featured,
-      product.status,
-      product.display_order,
-      id
-    ];
+  db.query(
+    sql,
+    values,
+    (err, result) => {
 
-
-    console.log("🔥 SQL VALUES:", values);
-
-
-    db.query(
-      sql,
-      values,
-      (err, result) => {
-
-        if (err) {
-
-          console.error("❌ MYSQL UPDATE ERROR:", err);
-
-          return callback(err);
-
-        }
-
-        console.log("✅ PRODUCT UPDATE SUCCESS");
-
-        callback(null, result);
+      if (err) {
+        console.error("❌ MYSQL UPDATE ERROR:", err);
+        return callback(err);
       }
-    );
-  },
 
+      console.log("✅ PRODUCT UPDATE SUCCESS");
 
+      callback(null, result);
+    }
+  );
+},
   // ==========================
   // DELETE PRODUCT
   // ==========================
