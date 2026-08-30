@@ -17,7 +17,7 @@ function FeaturedDesigns() {
   const touchEndX = useRef(0);
 
   /* =========================================================
-     LOAD PRODUCTS
+     LOAD FEATURED PRODUCTS
   ========================================================= */
 
   useEffect(() => {
@@ -31,16 +31,15 @@ function FeaturedDesigns() {
       const products = (response.data || [])
         .filter(
           (product) =>
-            Boolean(product.featured) &&
-            Boolean(product.status) &&
+            Number(product.featured) === 1 &&
+            Number(product.status) === 1 &&
             product.featured_image
         )
         .sort(
           (a, b) =>
             Number(a.display_order || 0) -
             Number(b.display_order || 0)
-        )
-        .slice(0, 7);
+        );
 
       setFeaturedProducts(products);
     } catch (error) {
@@ -72,35 +71,56 @@ function FeaturedDesigns() {
   }, []);
 
   /* =========================================================
-     NEXT / PREVIOUS
+     KEEP ACTIVE INDEX VALID
+  ========================================================= */
+
+  useEffect(() => {
+    if (
+      featuredProducts.length > 0 &&
+      activeIndex >= featuredProducts.length
+    ) {
+      setActiveIndex(0);
+    }
+  }, [featuredProducts, activeIndex]);
+
+  /* =========================================================
+     NEXT SLIDE
   ========================================================= */
 
   const nextSlide = () => {
-    if (!featuredProducts.length) return;
+    if (featuredProducts.length <= 1) return;
 
     setActiveIndex((current) =>
-      current === featuredProducts.length - 1
+      current >= featuredProducts.length - 1
         ? 0
         : current + 1
     );
   };
 
+  /* =========================================================
+     PREVIOUS SLIDE
+  ========================================================= */
+
   const previousSlide = () => {
-    if (!featuredProducts.length) return;
+    if (featuredProducts.length <= 1) return;
 
     setActiveIndex((current) =>
-      current === 0
+      current <= 0
         ? featuredProducts.length - 1
         : current - 1
     );
   };
+
+  /* =========================================================
+     GO TO SLIDE
+  ========================================================= */
 
   const goToSlide = (index) => {
     setActiveIndex(index);
   };
 
   /* =========================================================
-     MOBILE SWIPE
+     TOUCH / SWIPE
   ========================================================= */
 
   const handleTouchStart = (event) => {
@@ -135,7 +155,7 @@ function FeaturedDesigns() {
   };
 
   /* =========================================================
-     LOADING
+     LOADING / EMPTY
   ========================================================= */
 
   if (loading) {
@@ -147,7 +167,7 @@ function FeaturedDesigns() {
   }
 
   /* =========================================================
-     RELATIVE POSITION
+     GET RELATIVE POSITION
   ========================================================= */
 
   const getRelativePosition = (index) => {
@@ -168,16 +188,16 @@ function FeaturedDesigns() {
   };
 
   /* =========================================================
-     CARD POSITION
+     GET CARD STYLE
   ========================================================= */
 
   const getCardStyle = (index) => {
     const position =
       getRelativePosition(index);
 
-    /* ================================================
+    /* =======================================================
        MOBILE
-    ================================================= */
+    ======================================================= */
 
     if (isMobile) {
       if (position === 0) {
@@ -193,7 +213,7 @@ function FeaturedDesigns() {
         return {
           transform:
             "translateX(-132%) scale(0.80)",
-          opacity: 0.5,
+          opacity: 0.48,
           zIndex: 20,
         };
       }
@@ -202,23 +222,23 @@ function FeaturedDesigns() {
         return {
           transform:
             "translateX(32%) scale(0.80)",
-          opacity: 0.5,
+          opacity: 0.48,
           zIndex: 20,
         };
       }
 
       return {
         transform:
-          "translateX(-50%) scale(0.7)",
+          "translateX(-50%) scale(0.70)",
         opacity: 0,
         zIndex: 1,
         pointerEvents: "none",
       };
     }
 
-    /* ================================================
-       DESKTOP / TABLET
-    ================================================= */
+    /* =======================================================
+       DESKTOP
+    ======================================================= */
 
     const desktopPositions = {
       "-2": {
@@ -231,7 +251,7 @@ function FeaturedDesigns() {
       "-1": {
         x: -245,
         scale: 0.84,
-        opacity: 0.9,
+        opacity: 0.90,
         zIndex: 20,
       },
 
@@ -245,7 +265,7 @@ function FeaturedDesigns() {
       "1": {
         x: 245,
         scale: 0.84,
-        opacity: 0.9,
+        opacity: 0.90,
         zIndex: 20,
       },
 
@@ -263,7 +283,7 @@ function FeaturedDesigns() {
     if (!positionData) {
       return {
         transform:
-          "translateX(-50%) scale(0.6)",
+          "translateX(-50%) scale(0.60)",
         opacity: 0,
         zIndex: 1,
         pointerEvents: "none",
@@ -417,7 +437,7 @@ function FeaturedDesigns() {
         >
 
           {/* ===================================================
-              STAGE
+              CAROUSEL STAGE
           ==================================================== */}
 
           <div
@@ -461,7 +481,7 @@ function FeaturedDesigns() {
                   >
 
                     {/* =========================================
-                        IMAGE
+                        IMAGE CARD
                     ========================================== */}
 
                     <div
@@ -483,9 +503,7 @@ function FeaturedDesigns() {
                     >
 
                       <img
-                        src={
-                          product.featured_image
-                        }
+                        src={product.featured_image}
                         alt={product.name}
                         draggable="false"
                         className="
@@ -538,7 +556,7 @@ function FeaturedDesigns() {
                         </div>
                       )}
 
-                      {/* NUMBER */}
+                      {/* PRODUCT NUMBER */}
 
                       <div
                         className="
@@ -569,7 +587,7 @@ function FeaturedDesigns() {
 
 
                     {/* =========================================
-                        INFO
+                        PRODUCT INFORMATION
                     ========================================== */}
 
                     <div
@@ -886,6 +904,7 @@ function FeaturedDesigns() {
                   }`}
                   className="p-1"
                 >
+
                   <span
                     className={`
                       block
@@ -900,6 +919,7 @@ function FeaturedDesigns() {
                       }
                     `}
                   />
+
                 </button>
               )
             )}
