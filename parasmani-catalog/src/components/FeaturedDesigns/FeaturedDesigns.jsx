@@ -1,11 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Flower2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Flower2,
+} from "lucide-react";
 import { getProducts } from "../../services/productService";
 
 function FeaturedDesigns() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  /* =========================================================
+     LOAD PRODUCTS
+  ========================================================= */
 
   useEffect(() => {
     loadFeaturedProducts();
@@ -15,7 +28,7 @@ function FeaturedDesigns() {
     try {
       const response = await getProducts();
 
-      const products = response.data
+      const products = (response.data || [])
         .filter(
           (product) =>
             Boolean(product.featured) &&
@@ -27,7 +40,7 @@ function FeaturedDesigns() {
             Number(a.display_order || 0) -
             Number(b.display_order || 0)
         )
-        .slice(0, 5);
+        .slice(0, 7);
 
       setFeaturedProducts(products);
     } catch (error) {
@@ -40,6 +53,91 @@ function FeaturedDesigns() {
     }
   };
 
+  /* =========================================================
+     RESPONSIVE CHECK
+  ========================================================= */
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
+
+  /* =========================================================
+     NEXT / PREVIOUS
+  ========================================================= */
+
+  const nextSlide = () => {
+    if (!featuredProducts.length) return;
+
+    setActiveIndex((current) =>
+      current === featuredProducts.length - 1
+        ? 0
+        : current + 1
+    );
+  };
+
+  const previousSlide = () => {
+    if (!featuredProducts.length) return;
+
+    setActiveIndex((current) =>
+      current === 0
+        ? featuredProducts.length - 1
+        : current - 1
+    );
+  };
+
+  const goToSlide = (index) => {
+    setActiveIndex(index);
+  };
+
+  /* =========================================================
+     MOBILE SWIPE
+  ========================================================= */
+
+  const handleTouchStart = (event) => {
+    touchStartX.current =
+      event.touches[0].clientX;
+
+    touchEndX.current =
+      event.touches[0].clientX;
+  };
+
+  const handleTouchMove = (event) => {
+    touchEndX.current =
+      event.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const distance =
+      touchStartX.current -
+      touchEndX.current;
+
+    const minimumSwipe = 45;
+
+    if (Math.abs(distance) < minimumSwipe) {
+      return;
+    }
+
+    if (distance > 0) {
+      nextSlide();
+    } else {
+      previousSlide();
+    }
+  };
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
   if (loading) {
     return null;
   }
@@ -48,30 +146,187 @@ function FeaturedDesigns() {
     return null;
   }
 
-  const centerProduct = featuredProducts[0];
-  const sideProducts = featuredProducts.slice(1, 5);
+  /* =========================================================
+     RELATIVE POSITION
+  ========================================================= */
+
+  const getRelativePosition = (index) => {
+    const total = featuredProducts.length;
+
+    let difference =
+      index - activeIndex;
+
+    if (difference > total / 2) {
+      difference -= total;
+    }
+
+    if (difference < -total / 2) {
+      difference += total;
+    }
+
+    return difference;
+  };
+
+  /* =========================================================
+     CARD POSITION
+  ========================================================= */
+
+  const getCardStyle = (index) => {
+    const position =
+      getRelativePosition(index);
+
+    /* ================================================
+       MOBILE
+    ================================================= */
+
+    if (isMobile) {
+      if (position === 0) {
+        return {
+          transform:
+            "translateX(-50%) scale(1)",
+          opacity: 1,
+          zIndex: 30,
+        };
+      }
+
+      if (position === -1) {
+        return {
+          transform:
+            "translateX(-132%) scale(0.80)",
+          opacity: 0.5,
+          zIndex: 20,
+        };
+      }
+
+      if (position === 1) {
+        return {
+          transform:
+            "translateX(32%) scale(0.80)",
+          opacity: 0.5,
+          zIndex: 20,
+        };
+      }
+
+      return {
+        transform:
+          "translateX(-50%) scale(0.7)",
+        opacity: 0,
+        zIndex: 1,
+        pointerEvents: "none",
+      };
+    }
+
+    /* ================================================
+       DESKTOP / TABLET
+    ================================================= */
+
+    const desktopPositions = {
+      "-2": {
+        x: -450,
+        scale: 0.70,
+        opacity: 0.68,
+        zIndex: 10,
+      },
+
+      "-1": {
+        x: -245,
+        scale: 0.84,
+        opacity: 0.9,
+        zIndex: 20,
+      },
+
+      "0": {
+        x: 0,
+        scale: 1,
+        opacity: 1,
+        zIndex: 30,
+      },
+
+      "1": {
+        x: 245,
+        scale: 0.84,
+        opacity: 0.9,
+        zIndex: 20,
+      },
+
+      "2": {
+        x: 450,
+        scale: 0.70,
+        opacity: 0.68,
+        zIndex: 10,
+      },
+    };
+
+    const positionData =
+      desktopPositions[position];
+
+    if (!positionData) {
+      return {
+        transform:
+          "translateX(-50%) scale(0.6)",
+        opacity: 0,
+        zIndex: 1,
+        pointerEvents: "none",
+      };
+    }
+
+    return {
+      transform: `
+        translateX(
+          calc(-50% + ${positionData.x}px)
+        )
+        scale(${positionData.scale})
+      `,
+      opacity: positionData.opacity,
+      zIndex: positionData.zIndex,
+    };
+  };
 
   return (
-    <section className="bg-[#FAF8F2] py-14 sm:py-16 md:py-20 lg:py-24">
+    <section
+      className="
+        bg-[#FAF8F2]
+        py-10
+        sm:py-12
+        md:py-14
+        lg:py-16
+        overflow-hidden
+      "
+    >
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div
+        className="
+          max-w-[1320px]
+          mx-auto
+          px-4
+          sm:px-6
+          lg:px-8
+        "
+      >
 
         {/* =====================================================
-            SECTION HEADER
+            HEADER
         ====================================================== */}
 
-        <div className="text-center max-w-2xl mx-auto">
+        <div
+          className="
+            text-center
+            max-w-3xl
+            mx-auto
+          "
+        >
 
           <p
             className="
-              text-[#C8A044]
+              text-[#A77A24]
               uppercase
-              tracking-[0.35em]
-              text-[10px]
-              sm:text-xs
+              tracking-[0.32em]
+              text-[9px]
+              sm:text-[10px]
+              font-medium
             "
           >
-            Featured Designs
+            Parasmani Jewellers
           </p>
 
           <h2
@@ -80,320 +335,610 @@ function FeaturedDesigns() {
               text-3xl
               sm:text-4xl
               md:text-5xl
+              lg:text-6xl
               text-[#18322F]
-              leading-tight
+              leading-[0.95]
             "
-            style={{ fontFamily: "Cinzel, serif" }}
+            style={{
+              fontFamily: "Cinzel, serif",
+            }}
           >
-            The Art of Jewellery
+            Our Creations
           </h2>
 
-          <div className="flex items-center justify-center gap-3 mt-4">
+          <div
+            className="
+              flex
+              items-center
+              justify-center
+              gap-3
+              mt-4
+            "
+          >
 
-            <span className="w-10 sm:w-16 h-px bg-[#D9B566]" />
+            <span
+              className="
+                w-8
+                sm:w-12
+                h-px
+                bg-[#D9B566]
+              "
+            />
 
             <Flower2
-              size={20}
+              size={16}
               strokeWidth={1.2}
               className="text-[#C8A044]"
             />
 
-            <span className="w-10 sm:w-16 h-px bg-[#D9B566]" />
+            <span
+              className="
+                w-8
+                sm:w-12
+                h-px
+                bg-[#D9B566]
+              "
+            />
 
           </div>
 
-          <p className="
-            mt-4
-            text-xs
-            sm:text-sm
-            md:text-base
-            text-gray-500
-            leading-6
-          ">
-            Timeless designs crafted with care, tradition and
-            an eye for detail.
+          <p
+            className="
+              mt-3
+              text-xs
+              sm:text-sm
+              md:text-base
+              text-[#6E7471]
+              leading-6
+            "
+          >
+            Discover our latest creations,
+            crafted with tradition and
+            timeless elegance.
           </p>
 
         </div>
 
 
         {/* =====================================================
-            DESKTOP SHOWCASE
+            CAROUSEL
         ====================================================== */}
 
         <div
           className="
-            hidden
-            lg:grid
-            grid-cols-[1fr_1.35fr_1fr]
-            items-end
-            gap-5
-            xl:gap-8
-            max-w-6xl
-            mx-auto
-            mt-12
+            relative
+            mt-8
+            sm:mt-10
+            md:mt-12
           "
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
 
-          {/* LEFT PRODUCTS */}
-
-          <div className="flex items-end justify-end gap-4">
-
-            {sideProducts.slice(0, 2).map((product) => (
-
-              <ProductSmallCard
-                key={product.id}
-                product={product}
-              />
-
-            ))}
-
-          </div>
-
-
-          {/* CENTER PRODUCT */}
-
-          <ProductHeroCard product={centerProduct} />
-
-
-          {/* RIGHT PRODUCTS */}
-
-          <div className="flex items-end justify-start gap-4">
-
-            {sideProducts.slice(2, 4).map((product) => (
-
-              <ProductSmallCard
-                key={product.id}
-                product={product}
-              />
-
-            ))}
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-            TABLET
-        ====================================================== */}
-
-        <div
-          className="
-            hidden
-            sm:grid
-            lg:hidden
-            grid-cols-3
-            items-end
-            gap-4
-            max-w-4xl
-            mx-auto
-            mt-10
-          "
-        >
-
-          {/* LEFT */}
-
-          <div className="flex flex-col items-end gap-4">
-
-            {sideProducts.slice(0, 2).map((product) => (
-
-              <ProductTabletCard
-                key={product.id}
-                product={product}
-              />
-
-            ))}
-
-          </div>
-
-
-          {/* CENTER */}
-
-          <ProductHeroCard
-            product={centerProduct}
-            tablet
-          />
-
-
-          {/* RIGHT */}
-
-          <div className="flex flex-col items-start gap-4">
-
-            {sideProducts.slice(2, 4).map((product) => (
-
-              <ProductTabletCard
-                key={product.id}
-                product={product}
-              />
-
-            ))}
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-            MOBILE
-        ====================================================== */}
-
-        <div
-          className="
-            sm:hidden
-            mt-9
-          "
-        >
+          {/* ===================================================
+              STAGE
+          ==================================================== */}
 
           <div
             className="
-              flex
-              gap-4
-              overflow-x-auto
-              snap-x
-              snap-mandatory
-              pb-4
-              scrollbar-hide
-              -mx-4
-              px-4
+              relative
+              h-[430px]
+              sm:h-[470px]
+              md:h-[500px]
+              lg:h-[550px]
             "
           >
 
-            {featuredProducts.map((product, index) => (
+            {featuredProducts.map(
+              (product, index) => {
 
-              <Link
-                key={product.id}
-                to={`/products/${product.slug || product.id}`}
-                className="
-                  flex-shrink-0
-                  w-[78vw]
-                  max-w-[300px]
-                  snap-center
-                  group
-                "
-              >
+                const position =
+                  getRelativePosition(index);
 
-                {/* IMAGE */}
+                const isActive =
+                  position === 0;
 
-                <div
-                  className="
-                    relative
-                    aspect-[4/5]
-                    overflow-hidden
-                    rounded-[45%_45%_8%_8%]
-                    bg-white
-                    border
-                    border-[#DDBB70]
-                  "
-                >
-
-                  <img
-                    src={product.featured_image}
-                    alt={product.name}
-                    className="
-                      w-full
-                      h-full
-                      object-cover
-                      transition-transform
-                      duration-700
-                      group-active:scale-105
-                    "
-                  />
-
-                  {/* NUMBER */}
-
+                return (
                   <div
+                    key={product.id}
                     className="
                       absolute
-                      top-3
-                      left-3
-                      w-8
-                      h-8
-                      rounded-full
-                      bg-white/90
-                      backdrop-blur-sm
-                      border
-                      border-[#DDBB70]
-                      flex
-                      items-center
-                      justify-center
-                      text-[#A77A24]
-                      text-[10px]
+                      left-1/2
+                      top-0
+                      w-[70vw]
+                      max-w-[290px]
+                      sm:w-[245px]
+                      md:w-[255px]
+                      lg:w-[275px]
+                      xl:w-[290px]
+                      transition-all
+                      duration-700
+                      ease-[cubic-bezier(0.22,1,0.36,1)]
+                      select-none
                     "
+                    style={getCardStyle(index)}
                   >
-                    {String(index + 1).padStart(2, "0")}
+
+                    {/* =========================================
+                        IMAGE
+                    ========================================== */}
+
+                    <div
+                      className={`
+                        relative
+                        w-full
+                        aspect-[4/5]
+                        overflow-hidden
+                        rounded-t-[46%]
+                        rounded-b-[22px]
+                        bg-white
+                        border
+                        ${
+                          isActive
+                            ? "border-[#C8A044] shadow-[0_15px_40px_rgba(123,92,36,0.14)]"
+                            : "border-[#DCC895] shadow-[0_8px_25px_rgba(123,92,36,0.07)]"
+                        }
+                      `}
+                    >
+
+                      <img
+                        src={
+                          product.featured_image
+                        }
+                        alt={product.name}
+                        draggable="false"
+                        className="
+                          w-full
+                          h-full
+                          object-cover
+                        "
+                      />
+
+                      {/* SOFT OVERLAY */}
+
+                      <div
+                        className="
+                          absolute
+                          inset-0
+                          bg-gradient-to-t
+                          from-[#18322F]/20
+                          via-transparent
+                          to-transparent
+                          pointer-events-none
+                        "
+                      />
+
+                      {/* CATEGORY */}
+
+                      {isActive && (
+                        <div
+                          className="
+                            absolute
+                            top-3
+                            left-1/2
+                            -translate-x-1/2
+                            px-3
+                            py-1
+                            rounded-full
+                            bg-[#18322F]/90
+                            backdrop-blur-sm
+                            border
+                            border-[#D9B566]
+                            text-white
+                            text-[7px]
+                            sm:text-[8px]
+                            uppercase
+                            tracking-[0.18em]
+                            whitespace-nowrap
+                          "
+                        >
+                          {product.category_name ||
+                            "Jewellery"}
+                        </div>
+                      )}
+
+                      {/* NUMBER */}
+
+                      <div
+                        className="
+                          absolute
+                          bottom-3
+                          left-3
+                          w-8
+                          h-8
+                          rounded-full
+                          bg-[#FAF8F2]/95
+                          border
+                          border-[#D9B566]
+                          flex
+                          items-center
+                          justify-center
+                          text-[#8B6827]
+                          text-[9px]
+                          font-medium
+                        "
+                      >
+                        {String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}
+                      </div>
+
+                    </div>
+
+
+                    {/* =========================================
+                        INFO
+                    ========================================== */}
+
+                    <div
+                      className="
+                        text-center
+                        mt-4
+                      "
+                    >
+
+                      {isActive && (
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                            mb-1.5
+                          "
+                        >
+
+                          <span
+                            className="
+                              w-4
+                              h-px
+                              bg-[#D9B566]
+                            "
+                          />
+
+                          <Flower2
+                            size={12}
+                            strokeWidth={1.2}
+                            className="text-[#C8A044]"
+                          />
+
+                          <span
+                            className="
+                              w-4
+                              h-px
+                              bg-[#D9B566]
+                            "
+                          />
+
+                        </div>
+                      )}
+
+                      <h3
+                        className="
+                          text-base
+                          sm:text-lg
+                          md:text-xl
+                          text-[#18322F]
+                          truncate
+                          px-2
+                        "
+                        style={{
+                          fontFamily:
+                            "Cinzel, serif",
+                        }}
+                      >
+                        {product.name}
+                      </h3>
+
+                      {product.product_code && (
+                        <p
+                          className="
+                            mt-1
+                            text-[9px]
+                            sm:text-[10px]
+                            text-[#777D79]
+                          "
+                        >
+                          Design No.{" "}
+                          {product.product_code}
+                        </p>
+                      )}
+
+                    </div>
+
+
+                    {/* =========================================
+                        SIDE CARD CLICK
+                    ========================================== */}
+
+                    {!isActive && (
+                      <button
+                        type="button"
+                        aria-label={`Show ${product.name}`}
+                        onClick={() =>
+                          goToSlide(index)
+                        }
+                        className="
+                          absolute
+                          inset-0
+                          w-full
+                          h-[calc(100%-65px)]
+                          cursor-pointer
+                          bg-transparent
+                        "
+                      />
+                    )}
+
+
+                    {/* =========================================
+                        ACTIVE CARD LINK
+                    ========================================== */}
+
+                    {isActive && (
+                      <Link
+                        to={`/products/${
+                          product.slug ||
+                          product.id
+                        }`}
+                        aria-label={`View ${product.name}`}
+                        className="
+                          absolute
+                          inset-0
+                          h-[calc(100%-65px)]
+                        "
+                      />
+                    )}
+
                   </div>
-
-                </div>
-
-
-                {/* PRODUCT INFO */}
-
-                <div className="text-center mt-4">
-
-                  <p
-                    className="
-                      text-[#A77A24]
-                      uppercase
-                      tracking-[0.18em]
-                      text-[8px]
-                    "
-                  >
-                    {product.category_name || "Jewellery"}
-                  </p>
-
-                  <h3
-                    className="
-                      mt-1
-                      text-lg
-                      text-[#18322F]
-                    "
-                    style={{ fontFamily: "Cinzel, serif" }}
-                  >
-                    {product.name}
-                  </h3>
-
-                  {product.product_code && (
-                    <p className="
-                      mt-1
-                      text-[10px]
-                      text-gray-500
-                    ">
-                      Design No. {product.product_code}
-                    </p>
-                  )}
-
-                </div>
-
-              </Link>
-
-            ))}
+                );
+              }
+            )}
 
           </div>
 
 
-          {/* MOBILE SWIPE INDICATOR */}
+          {/* ===================================================
+              DESKTOP ARROWS
+          ==================================================== */}
 
-          <div className="flex justify-center items-center gap-2 mt-3">
+          {featuredProducts.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={previousSlide}
+                aria-label="Previous design"
+                className="
+                  hidden
+                  md:flex
+                  absolute
+                  left-0
+                  lg:left-5
+                  top-[40%]
+                  -translate-y-1/2
+                  w-11
+                  h-11
+                  lg:w-12
+                  lg:h-12
+                  rounded-full
+                  items-center
+                  justify-center
+                  bg-[#FAF8F2]
+                  border
+                  border-[#D9B566]
+                  text-[#765C28]
+                  shadow-[0_6px_20px_rgba(123,92,36,0.10)]
+                  transition-all
+                  duration-300
+                  hover:bg-[#18322F]
+                  hover:text-white
+                  hover:border-[#18322F]
+                  z-50
+                "
+              >
+                <ArrowLeft
+                  size={18}
+                  strokeWidth={1.4}
+                />
+              </button>
 
-            <span className="w-8 h-px bg-[#D9B566]" />
 
-            <span className="text-[#A77A24] text-[9px] tracking-wider">
-              SWIPE TO EXPLORE
-            </span>
+              <button
+                type="button"
+                onClick={nextSlide}
+                aria-label="Next design"
+                className="
+                  hidden
+                  md:flex
+                  absolute
+                  right-0
+                  lg:right-5
+                  top-[40%]
+                  -translate-y-1/2
+                  w-11
+                  h-11
+                  lg:w-12
+                  lg:h-12
+                  rounded-full
+                  items-center
+                  justify-center
+                  bg-[#FAF8F2]
+                  border
+                  border-[#D9B566]
+                  text-[#765C28]
+                  shadow-[0_6px_20px_rgba(123,92,36,0.10)]
+                  transition-all
+                  duration-300
+                  hover:bg-[#18322F]
+                  hover:text-white
+                  hover:border-[#18322F]
+                  z-50
+                "
+              >
+                <ArrowRight
+                  size={18}
+                  strokeWidth={1.4}
+                />
+              </button>
+            </>
+          )}
 
-            <span className="w-8 h-px bg-[#D9B566]" />
 
-          </div>
+          {/* ===================================================
+              MOBILE ARROWS
+          ==================================================== */}
+
+          {featuredProducts.length > 1 && (
+            <div
+              className="
+                flex
+                md:hidden
+                items-center
+                justify-center
+                gap-4
+                mt-1
+              "
+            >
+
+              <button
+                type="button"
+                onClick={previousSlide}
+                aria-label="Previous design"
+                className="
+                  w-10
+                  h-10
+                  rounded-full
+                  flex
+                  items-center
+                  justify-center
+                  border
+                  border-[#D9B566]
+                  bg-[#FAF8F2]
+                  text-[#765C28]
+                  active:scale-95
+                  transition-transform
+                "
+              >
+                <ArrowLeft
+                  size={17}
+                  strokeWidth={1.4}
+                />
+              </button>
+
+
+              <button
+                type="button"
+                onClick={nextSlide}
+                aria-label="Next design"
+                className="
+                  w-10
+                  h-10
+                  rounded-full
+                  flex
+                  items-center
+                  justify-center
+                  border
+                  border-[#D9B566]
+                  bg-[#FAF8F2]
+                  text-[#765C28]
+                  active:scale-95
+                  transition-transform
+                "
+              >
+                <ArrowRight
+                  size={17}
+                  strokeWidth={1.4}
+                />
+              </button>
+
+            </div>
+          )}
 
         </div>
+
+
+        {/* =====================================================
+            DOTS
+        ====================================================== */}
+
+        {featuredProducts.length > 1 && (
+          <div
+            className="
+              flex
+              items-center
+              justify-center
+              gap-1
+              mt-2
+            "
+          >
+
+            {featuredProducts.map(
+              (product, index) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() =>
+                    goToSlide(index)
+                  }
+                  aria-label={`Go to design ${
+                    index + 1
+                  }`}
+                  className="p-1"
+                >
+                  <span
+                    className={`
+                      block
+                      h-1.5
+                      rounded-full
+                      transition-all
+                      duration-300
+                      ${
+                        index === activeIndex
+                          ? "w-7 bg-[#C8A044]"
+                          : "w-1.5 bg-[#D9B566]"
+                      }
+                    `}
+                  />
+                </button>
+              )
+            )}
+
+          </div>
+        )}
+
+
+        {/* =====================================================
+            MOBILE SWIPE
+        ====================================================== */}
+
+        <p
+          className="
+            md:hidden
+            text-center
+            mt-2
+            text-[8px]
+            uppercase
+            tracking-[0.22em]
+            text-[#9A8A68]
+          "
+        >
+          Swipe to explore
+        </p>
 
 
         {/* =====================================================
             VIEW ALL
         ====================================================== */}
 
-        <div className="flex justify-center mt-9 sm:mt-11">
+        <div
+          className="
+            flex
+            justify-center
+            mt-6
+            sm:mt-8
+          "
+        >
 
           <Link
             to="/collections"
@@ -411,11 +956,12 @@ function FeaturedDesigns() {
               text-[#765C28]
               text-xs
               sm:text-sm
+              tracking-wide
               transition-all
               duration-300
-              hover:bg-[#D9A94A]
+              hover:bg-[#18322F]
               hover:text-white
-              hover:border-[#D9A94A]
+              hover:border-[#18322F]
             "
           >
 
@@ -424,7 +970,7 @@ function FeaturedDesigns() {
             </span>
 
             <ArrowRight
-              size={16}
+              size={15}
               strokeWidth={1.4}
             />
 
@@ -435,250 +981,6 @@ function FeaturedDesigns() {
       </div>
 
     </section>
-  );
-}
-
-
-/* =============================================================
-   SMALL DESKTOP PRODUCT
-============================================================= */
-
-function ProductSmallCard({ product }) {
-  return (
-    <Link
-      to={`/products/${product.slug || product.id}`}
-      className="
-        group
-        w-[105px]
-        xl:w-[120px]
-        text-center
-      "
-    >
-
-      <div
-        className="
-          relative
-          w-full
-          aspect-[4/5]
-          overflow-hidden
-          rounded-[48%_48%_8%_8%]
-          bg-white
-          border
-          border-[#DDBB70]
-        "
-      >
-
-        <img
-          src={product.featured_image}
-          alt={product.name}
-          className="
-            w-full
-            h-full
-            object-cover
-            transition-transform
-            duration-700
-            group-hover:scale-105
-          "
-        />
-
-      </div>
-
-      <h3
-        className="
-          mt-3
-          text-sm
-          xl:text-base
-          text-[#18322F]
-          truncate
-        "
-        style={{ fontFamily: "Cinzel, serif" }}
-      >
-        {product.name}
-      </h3>
-
-      {product.product_code && (
-        <p className="text-[9px] text-gray-500 mt-1">
-          {product.product_code}
-        </p>
-      )}
-
-    </Link>
-  );
-}
-
-
-/* =============================================================
-   TABLET PRODUCT
-============================================================= */
-
-function ProductTabletCard({ product }) {
-  return (
-    <Link
-      to={`/products/${product.slug || product.id}`}
-      className="group w-[115px] text-center"
-    >
-
-      <div
-        className="
-          w-full
-          aspect-[4/5]
-          overflow-hidden
-          rounded-[48%_48%_8%_8%]
-          bg-white
-          border
-          border-[#DDBB70]
-        "
-      >
-
-        <img
-          src={product.featured_image}
-          alt={product.name}
-          className="
-            w-full
-            h-full
-            object-cover
-            transition-transform
-            duration-700
-            group-hover:scale-105
-          "
-        />
-
-      </div>
-
-      <h3
-        className="
-          mt-2
-          text-sm
-          text-[#18322F]
-          truncate
-        "
-        style={{ fontFamily: "Cinzel, serif" }}
-      >
-        {product.name}
-      </h3>
-
-    </Link>
-  );
-}
-
-
-/* =============================================================
-   HERO PRODUCT
-============================================================= */
-
-function ProductHeroCard({ product, tablet = false }) {
-  return (
-    <Link
-      to={`/products/${product.slug || product.id}`}
-      className={`
-        group
-        text-center
-        ${tablet ? "w-full" : "w-full"}
-      `}
-    >
-
-      {/* HERO IMAGE */}
-
-      <div
-        className={`
-          relative
-          mx-auto
-          overflow-hidden
-          rounded-[48%_48%_7%_7%]
-          bg-[#0F302C]
-          border-2
-          border-[#D9B566]
-          shadow-[0_12px_35px_rgba(180,140,50,0.15)]
-
-          ${
-            tablet
-              ? "w-[190px] aspect-[4/5]"
-              : "w-[245px] xl:w-[270px] aspect-[4/5]"
-          }
-        `}
-      >
-
-        <img
-          src={product.featured_image}
-          alt={product.name}
-          className="
-            w-full
-            h-full
-            object-cover
-            transition-transform
-            duration-700
-            group-hover:scale-105
-          "
-        />
-
-        {/* FEATURED BADGE */}
-
-        <div
-          className="
-            absolute
-            top-3
-            left-1/2
-            -translate-x-1/2
-            px-3
-            py-1
-            rounded-full
-            bg-[#D9A94A]
-            text-white
-            text-[8px]
-            uppercase
-            tracking-[0.18em]
-            whitespace-nowrap
-          "
-        >
-          Featured
-        </div>
-
-      </div>
-
-
-      {/* INFO */}
-
-      <div className="mt-5">
-
-        <div className="flex items-center justify-center gap-2 mb-2">
-
-          <span className="w-5 h-px bg-[#D9B566]" />
-
-          <Flower2
-            size={13}
-            strokeWidth={1.2}
-            className="text-[#C8A044]"
-          />
-
-          <span className="w-5 h-px bg-[#D9B566]" />
-
-        </div>
-
-        <h3
-          className="
-            text-xl
-            md:text-2xl
-            text-[#18322F]
-          "
-          style={{ fontFamily: "Cinzel, serif" }}
-        >
-          {product.name}
-        </h3>
-
-        {product.product_code && (
-          <p className="
-            mt-1
-            text-[10px]
-            sm:text-xs
-            text-gray-500
-          ">
-            Design No. {product.product_code}
-          </p>
-        )}
-
-      </div>
-
-    </Link>
   );
 }
 
