@@ -291,31 +291,38 @@ exports.updateProduct = async (req, res) => {
       uploaded, keep the existing gallery.
     */
 
-    let galleryImages =
-      existingProduct.gallery_images ||
-      "[]";
+    /* ==========================
+       GALLERY IMAGES
+    ========================== */
 
+    let galleryImages = "[]";
 
-    /*
-      If new gallery images are
-      uploaded, replace the gallery.
-    */
+    // Keep existing gallery images
+    if (existingProduct.gallery_images) {
 
-    if (
-      req.files?.gallery_images?.length
-    ) {
+      if (Array.isArray(existingProduct.gallery_images)) {
+
+        galleryImages =
+          JSON.stringify(existingProduct.gallery_images);
+
+      } else {
+
+        galleryImages =
+          String(existingProduct.gallery_images);
+
+      }
+
+    }
+
+    // Replace with newly uploaded gallery images
+    if (req.files?.gallery_images?.length) {
 
       const convertedGallery = [];
 
-      for (
-        const file of
-        req.files.gallery_images
-      ) {
+      for (const file of req.files.gallery_images) {
 
         const convertedPath =
-          await convertHeicToJpg(
-            file.path
-          );
+          await convertHeicToJpg(file.path);
 
         convertedGallery.push(
           path.basename(convertedPath)
@@ -324,9 +331,7 @@ exports.updateProduct = async (req, res) => {
       }
 
       galleryImages =
-        JSON.stringify(
-          convertedGallery
-        );
+        JSON.stringify(convertedGallery);
 
     }
 
