@@ -4,7 +4,7 @@ import logo from "../../assets/logo.png";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "https://api.parasmanijewellers.in";
+  "https://api.parasmanijewelers.in";
 
 function Login() {
   const navigate = useNavigate();
