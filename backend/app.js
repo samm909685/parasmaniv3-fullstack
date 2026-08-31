@@ -9,6 +9,7 @@ require("./config/db");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const designRequestRoutes = require("./routes/designRequestRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -45,6 +46,10 @@ app.use(
 /* ==========================
    API ROUTES
 ========================== */
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
 app.use(
   "/api/categories",

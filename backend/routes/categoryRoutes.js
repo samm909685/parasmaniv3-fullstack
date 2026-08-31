@@ -1,7 +1,10 @@
 const express = require("express");
+
 const router = express.Router();
 
 const upload = require("../config/multer");
+
+const authMiddleware = require("../middleware/authMiddleware");
 
 const {
   getAllCategories,
@@ -10,28 +13,54 @@ const {
   deleteCategory,
 } = require("../controllers/categoryController");
 
-/* Get All */
 
-router.get("/", getAllCategories);
+/* ==========================
+   GET ALL CATEGORIES
+   PUBLIC
+========================== */
 
-/* Create */
+router.get(
+  "/",
+  getAllCategories
+);
+
+
+/* ==========================
+   CREATE CATEGORY
+   PROTECTED
+========================== */
 
 router.post(
   "/",
+  authMiddleware,
   upload.single("image"),
   createCategory
 );
 
-/* Update */
+
+/* ==========================
+   UPDATE CATEGORY
+   PROTECTED
+========================== */
 
 router.put(
   "/:id",
+  authMiddleware,
   upload.single("image"),
   updateCategory
 );
 
-/* Delete */
 
-router.delete("/:id", deleteCategory);
+/* ==========================
+   DELETE CATEGORY
+   PROTECTED
+========================== */
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  deleteCategory
+);
+
 
 module.exports = router;

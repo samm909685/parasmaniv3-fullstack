@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
+import ProtectedRoute from "./components/admin/ProtectedRoute";
+
 import Home from "./pages/Home";
 import Collections from "./pages/Collections";
 import CategoryProducts from "./pages/CategoryProducts";
@@ -16,13 +18,14 @@ import Settings from "./pages/admin/Settings";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 
+
 function App() {
   return (
     <Routes>
 
-      {/* ==========================
+      {/* =====================================================
           CUSTOMER WEBSITE
-      ========================== */}
+      ====================================================== */}
 
       <Route element={<CustomerLayout />}>
 
@@ -53,44 +56,75 @@ function App() {
 
       </Route>
 
-      {/* ==========================
-          ADMIN
-      ========================== */}
+
+      {/* =====================================================
+          ADMIN LOGIN
+          PUBLIC
+      ====================================================== */}
 
       <Route
         path="/admin/login"
         element={<Login />}
       />
 
-      <Route
-        path="/admin/dashboard"
-        element={<Dashboard />}
-      />
 
-      <Route
-        path="/admin/categories"
-        element={<Categories />}
-      />
+      {/* =====================================================
+          PROTECTED ADMIN AREA
+          
+          Every route inside this block requires
+          a valid admin login token.
+      ====================================================== */}
 
-      <Route
-        path="/admin/products"
-        element={<Products />}
-      />
+      <Route element={<ProtectedRoute />}>
 
-      <Route
-        path="/admin/media"
-        element={<Media />}
-      />
+        {/* Dashboard */}
 
-      <Route
-  path="/admin/design-requests"
-  element={<DesignRequests />}
-/>
+        <Route
+          path="/admin/dashboard"
+          element={<Dashboard />}
+        />
 
-      <Route
-        path="/admin/settings"
-        element={<Settings />}
-      />
+
+        {/* Categories */}
+
+        <Route
+          path="/admin/categories"
+          element={<Categories />}
+        />
+
+
+        {/* Products */}
+
+        <Route
+          path="/admin/products"
+          element={<Products />}
+        />
+
+
+        {/* Media */}
+
+        <Route
+          path="/admin/media"
+          element={<Media />}
+        />
+
+
+        {/* Design Requests */}
+
+        <Route
+          path="/admin/design-requests"
+          element={<DesignRequests />}
+        />
+
+
+        {/* Settings */}
+
+        <Route
+          path="/admin/settings"
+          element={<Settings />}
+        />
+
+      </Route>
 
     </Routes>
   );
