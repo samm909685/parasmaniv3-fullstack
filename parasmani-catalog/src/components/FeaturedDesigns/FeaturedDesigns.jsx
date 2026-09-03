@@ -10,8 +10,12 @@ import { getProducts } from "../../services/productService";
 function FeaturedDesigns() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(4);
+  const [carouselWidth, setCarouselWidth] = useState(0);
+
+  const carouselRef = useRef(null);
 
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -53,48 +57,187 @@ function FeaturedDesigns() {
   };
 
   /* =========================================================
-     RESPONSIVE CHECK
+     RESPONSIVE CARD COUNT
+
+     Desktop  >= 1024px  = 4 cards
+     Tablet   768-1023px = 3 cards
+     Mobile   < 768px    = 2 cards
   ========================================================= */
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const updateVisibleCount = () => {
+      const width = window.innerWidth;
+
+      if (width < 768) {
+        setVisibleCount(2);
+      } else if (width < 1024) {
+        setVisibleCount(3);
+      } else {
+        setVisibleCount(4);
+      }
     };
 
-    checkMobile();
+    updateVisibleCount();
 
-    window.addEventListener("resize", checkMobile);
+    window.addEventListener(
+      "resize",
+      updateVisibleCount
+    );
 
     return () => {
-      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener(
+        "resize",
+        updateVisibleCount
+      );
     };
   }, []);
+
+  /* =========================================================
+     MEASURE CAROUSEL WIDTH
+
+     IMPORTANT:
+     This runs AFTER products have loaded.
+
+     This fixes the previous 0px card problem.
+  ========================================================= */
+
+  useEffect(() => {
+    if (
+      loading ||
+      !featuredProducts.length ||
+      !carouselRef.current
+    ) {
+      return;
+    }
+
+    const element = carouselRef.current;
+
+    const updateCarouselWidth = () => {
+      const width = element.clientWidth;
+
+      if (width > 0) {
+        setCarouselWidth(width);
+      }
+    };
+
+    // Measure immediately
+    updateCarouselWidth();
+
+    // Keep it accurate if the browser/container changes size
+    const resizeObserver = new ResizeObserver(() => {
+      updateCarouselWidth();
+    });
+
+    resizeObserver.observe(element);
+
+    window.addEventListener(
+      "resize",
+      updateCarouselWidth
+    );
+
+    return () => {
+      resizeObserver.disconnect();
+
+      window.removeEventListener(
+        "resize",
+        updateCarouselWidth
+      );
+    };
+  }, [
+    loading,
+    featuredProducts.length,
+    visibleCount,
+  ]);
+
+  /* =========================================================
+     CARD GAP
+
+     Desktop  = 18px
+     Tablet   = 14px
+     Mobile   = 10px
+  ========================================================= */
+
+  const gap =
+    visibleCount === 2
+      ? 10
+      : visibleCount === 3
+      ? 14
+      : 18;
+
+  /* =========================================================
+     EXACT CARD WIDTH
+
+     Example desktop:
+
+       Available width = 1520px
+       4 cards
+       3 gaps × 18px
+
+       (1520 - 54) / 4
+       = 366.5px
+
+     Every card gets EXACTLY the same width.
+  ========================================================= */
+
+  const cardWidth =
+    carouselWidth > 0
+      ? (
+          carouselWidth -
+          gap * (visibleCount - 1)
+        ) / visibleCount
+      : 0;
+
+  /* =========================================================
+     MAX SLIDE INDEX
+  ========================================================= */
+
+  const maxIndex = Math.max(
+    0,
+    featuredProducts.length - visibleCount
+  );
 
   /* =========================================================
      KEEP ACTIVE INDEX VALID
   ========================================================= */
 
   useEffect(() => {
-    if (
-      featuredProducts.length > 0 &&
-      activeIndex >= featuredProducts.length
-    ) {
-      setActiveIndex(0);
+    if (!featuredProducts.length) {
+      return;
     }
-  }, [featuredProducts, activeIndex]);
+
+    const currentMaxIndex = Math.max(
+      0,
+      featuredProducts.length - visibleCount
+    );
+
+    if (activeIndex > currentMaxIndex) {
+      setActiveIndex(currentMaxIndex);
+    }
+  }, [
+    featuredProducts.length,
+    visibleCount,
+    activeIndex,
+  ]);
 
   /* =========================================================
      NEXT SLIDE
   ========================================================= */
 
   const nextSlide = () => {
-    if (featuredProducts.length <= 1) return;
+    if (
+      featuredProducts.length <=
+      visibleCount
+    ) {
+      return;
+    }
 
-    setActiveIndex((current) =>
-      current >= featuredProducts.length - 1
-        ? 0
-        : current + 1
-    );
+    setActiveIndex((current) => {
+      if (current >= maxIndex) {
+        return 0;
+      }
+
+      return current + 1;
+    });
   };
 
   /* =========================================================
@@ -102,13 +245,20 @@ function FeaturedDesigns() {
   ========================================================= */
 
   const previousSlide = () => {
-    if (featuredProducts.length <= 1) return;
+    if (
+      featuredProducts.length <=
+      visibleCount
+    ) {
+      return;
+    }
 
-    setActiveIndex((current) =>
-      current <= 0
-        ? featuredProducts.length - 1
-        : current - 1
-    );
+    setActiveIndex((current) => {
+      if (current <= 0) {
+        return maxIndex;
+      }
+
+      return current - 1;
+    });
   };
 
   /* =========================================================
@@ -118,6 +268,44 @@ function FeaturedDesigns() {
   const goToSlide = (index) => {
     setActiveIndex(index);
   };
+
+  /* =========================================================
+     AUTO SCROLL
+
+     Moves exactly ONE CARD at a time.
+
+     3.5 seconds between movements.
+  ========================================================= */
+
+  useEffect(() => {
+    if (
+      loading ||
+      featuredProducts.length <=
+        visibleCount
+    ) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setActiveIndex((current) => {
+        if (current >= maxIndex) {
+          return 0;
+        }
+
+        return current + 1;
+      });
+    }, 3500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [
+    loading,
+    featuredProducts.length,
+    visibleCount,
+    maxIndex,
+    activeIndex,
+  ]);
 
   /* =========================================================
      TOUCH / SWIPE
@@ -143,7 +331,10 @@ function FeaturedDesigns() {
 
     const minimumSwipe = 45;
 
-    if (Math.abs(distance) < minimumSwipe) {
+    if (
+      Math.abs(distance) <
+      minimumSwipe
+    ) {
       return;
     }
 
@@ -153,6 +344,30 @@ function FeaturedDesigns() {
       previousSlide();
     }
   };
+
+  /* =========================================================
+     TRACK POSITION
+
+     One movement =
+
+       CARD WIDTH + GAP
+  ========================================================= */
+
+  const moveDistance =
+    cardWidth + gap;
+
+  const trackStyle =
+    cardWidth > 0
+      ? {
+          transform: `translate3d(-${
+            activeIndex *
+            moveDistance
+          }px, 0, 0)`,
+        }
+      : {
+          transform:
+            "translate3d(0, 0, 0)",
+        };
 
   /* =========================================================
      LOADING / EMPTY
@@ -167,166 +382,33 @@ function FeaturedDesigns() {
   }
 
   /* =========================================================
-     GET RELATIVE POSITION
+     RENDER
   ========================================================= */
-
-  const getRelativePosition = (index) => {
-    const total = featuredProducts.length;
-
-    let difference =
-      index - activeIndex;
-
-    if (difference > total / 2) {
-      difference -= total;
-    }
-
-    if (difference < -total / 2) {
-      difference += total;
-    }
-
-    return difference;
-  };
-
-  /* =========================================================
-     GET CARD STYLE
-  ========================================================= */
-
-  const getCardStyle = (index) => {
-    const position =
-      getRelativePosition(index);
-
-    /* =======================================================
-       MOBILE
-    ======================================================= */
-
-    if (isMobile) {
-      if (position === 0) {
-        return {
-          transform:
-            "translateX(-50%) scale(1)",
-          opacity: 1,
-          zIndex: 30,
-        };
-      }
-
-      if (position === -1) {
-        return {
-          transform:
-            "translateX(-132%) scale(0.80)",
-          opacity: 0.48,
-          zIndex: 20,
-        };
-      }
-
-      if (position === 1) {
-        return {
-          transform:
-            "translateX(32%) scale(0.80)",
-          opacity: 0.48,
-          zIndex: 20,
-        };
-      }
-
-      return {
-        transform:
-          "translateX(-50%) scale(0.70)",
-        opacity: 0,
-        zIndex: 1,
-        pointerEvents: "none",
-      };
-    }
-
-    /* =======================================================
-       DESKTOP
-    ======================================================= */
-
-    const desktopPositions = {
-      "-2": {
-        x: -450,
-        scale: 0.70,
-        opacity: 0.68,
-        zIndex: 10,
-      },
-
-      "-1": {
-        x: -245,
-        scale: 0.84,
-        opacity: 0.90,
-        zIndex: 20,
-      },
-
-      "0": {
-        x: 0,
-        scale: 1,
-        opacity: 1,
-        zIndex: 30,
-      },
-
-      "1": {
-        x: 245,
-        scale: 0.84,
-        opacity: 0.90,
-        zIndex: 20,
-      },
-
-      "2": {
-        x: 450,
-        scale: 0.70,
-        opacity: 0.68,
-        zIndex: 10,
-      },
-    };
-
-    const positionData =
-      desktopPositions[position];
-
-    if (!positionData) {
-      return {
-        transform:
-          "translateX(-50%) scale(0.60)",
-        opacity: 0,
-        zIndex: 1,
-        pointerEvents: "none",
-      };
-    }
-
-    return {
-      transform: `
-        translateX(
-          calc(-50% + ${positionData.x}px)
-        )
-        scale(${positionData.scale})
-      `,
-      opacity: positionData.opacity,
-      zIndex: positionData.zIndex,
-    };
-  };
 
   return (
     <section
       className="
         bg-[#FAF8F2]
-        py-10
-        sm:py-12
-        md:py-14
-        lg:py-16
+        py-8
+        sm:py-9
+        md:py-10
+        lg:py-12
         overflow-hidden
       "
     >
-
       <div
         className="
-          max-w-[1320px]
+          max-w-[1560px]
           mx-auto
           px-4
           sm:px-6
+          md:px-7
           lg:px-8
         "
       >
-
-        {/* =====================================================
+        {/* ===================================================
             HEADER
-        ====================================================== */}
+        ==================================================== */}
 
         <div
           className="
@@ -335,14 +417,14 @@ function FeaturedDesigns() {
             mx-auto
           "
         >
-
           <p
             className="
               text-[#A77A24]
               uppercase
-              tracking-[0.32em]
-              text-[9px]
-              sm:text-[10px]
+              tracking-[0.30em]
+              text-[8px]
+              sm:text-[9px]
+              md:text-[10px]
               font-medium
             "
           >
@@ -351,13 +433,13 @@ function FeaturedDesigns() {
 
           <h2
             className="
-              mt-2
-              text-3xl
-              sm:text-4xl
-              md:text-5xl
-              lg:text-6xl
+              mt-1.5
+              text-2xl
+              sm:text-3xl
+              md:text-4xl
+              lg:text-5xl
               text-[#18322F]
-              leading-[0.95]
+              leading-none
             "
             style={{
               fontFamily: "Cinzel, serif",
@@ -371,276 +453,269 @@ function FeaturedDesigns() {
               flex
               items-center
               justify-center
-              gap-3
-              mt-4
+              gap-2
+              mt-3
             "
           >
-
             <span
               className="
-                w-8
-                sm:w-12
+                w-7
+                sm:w-9
+                md:w-11
                 h-px
                 bg-[#D9B566]
               "
             />
 
             <Flower2
-              size={16}
+              size={14}
               strokeWidth={1.2}
               className="text-[#C8A044]"
             />
 
             <span
               className="
-                w-8
-                sm:w-12
+                w-7
+                sm:w-9
+                md:w-11
                 h-px
                 bg-[#D9B566]
               "
             />
-
           </div>
 
           <p
             className="
-              mt-3
-              text-xs
-              sm:text-sm
-              md:text-base
+              mt-2
+              text-[10px]
+              sm:text-xs
+              md:text-sm
               text-[#6E7471]
-              leading-6
+              leading-5
             "
           >
             Discover our latest creations,
             crafted with tradition and
             timeless elegance.
           </p>
-
         </div>
 
-
-        {/* =====================================================
+        {/* ===================================================
             CAROUSEL
-        ====================================================== */}
+        ==================================================== */}
 
         <div
           className="
             relative
-            mt-8
-            sm:mt-10
-            md:mt-12
+            mt-6
+            sm:mt-7
+            md:mt-8
           "
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-
-          {/* ===================================================
-              CAROUSEL STAGE
-          ==================================================== */}
+          {/* =================================================
+              VIEWPORT
+          ================================================= */}
 
           <div
+            ref={carouselRef}
             className="
               relative
-              h-[430px]
-              sm:h-[470px]
-              md:h-[500px]
-              lg:h-[550px]
+              overflow-hidden
+              w-full
+              touch-pan-y
             "
           >
+            {/* ===============================================
+                TRACK
+            ================================================ */}
 
-            {featuredProducts.map(
-              (product, index) => {
-
-                const position =
-                  getRelativePosition(index);
-
-                const isActive =
-                  position === 0;
-
-                return (
+            <div
+              className="
+                flex
+                items-start
+                transition-transform
+                duration-700
+                ease-[cubic-bezier(0.22,1,0.36,1)]
+                will-change-transform
+              "
+              style={{
+                ...trackStyle,
+                gap: `${gap}px`,
+              }}
+            >
+              {featuredProducts.map(
+                (product, index) => (
                   <div
                     key={product.id}
                     className="
-                      absolute
-                      left-1/2
-                      top-0
-                      w-[70vw]
-                      max-w-[290px]
-                      sm:w-[245px]
-                      md:w-[255px]
-                      lg:w-[275px]
-                      xl:w-[290px]
-                      transition-all
-                      duration-700
-                      ease-[cubic-bezier(0.22,1,0.36,1)]
-                      select-none
+                      shrink-0
+                      min-w-0
                     "
-                    style={getCardStyle(index)}
+                    style={{
+                      width: `${cardWidth}px`,
+                      flex: `0 0 ${cardWidth}px`,
+                    }}
                   >
-
-                    {/* =========================================
+                    {/* =====================================
                         IMAGE CARD
-                    ========================================== */}
 
-                    <div
-                      className={`
-                        relative
-                        w-full
-                        aspect-[4/5]
-                        overflow-hidden
-                        rounded-t-[46%]
-                        rounded-b-[22px]
-                        bg-white
-                        border
-                        ${
-                          isActive
-                            ? "border-[#C8A044] shadow-[0_15px_40px_rgba(123,92,36,0.14)]"
-                            : "border-[#DCC895] shadow-[0_8px_25px_rgba(123,92,36,0.07)]"
-                        }
-                      `}
+                        EXACT PORTRAIT SHAPE:
+                        4 : 5
+                    ====================================== */}
+
+                    <Link
+                      to={`/products/${
+                        product.slug ||
+                        product.id
+                      }`}
+                      aria-label={`View ${product.name}`}
+                      className="block"
                     >
-
-                      <img
-                        src={product.featured_image}
-                        alt={product.name}
-                        draggable="false"
-                        className="
-                          w-full
-                          h-full
-                          object-cover
-                        "
-                      />
-
-                      {/* SOFT OVERLAY */}
-
                       <div
                         className="
-                          absolute
-                          inset-0
-                          bg-gradient-to-t
-                          from-[#18322F]/20
-                          via-transparent
-                          to-transparent
-                          pointer-events-none
+                          relative
+                          w-full
+                          aspect-[4/5]
+                          overflow-hidden
+                          rounded-[6px]
+                          sm:rounded-[8px]
+                          md:rounded-[10px]
+                          bg-white
+                          border
+                          border-[#DCC895]
+                          shadow-[0_8px_25px_rgba(123,92,36,0.07)]
+                          group
                         "
-                      />
+                      >
+                        <img
+                          src={
+                            product.featured_image
+                          }
+                          alt={product.name}
+                          draggable="false"
+                          className="
+                            w-full
+                            h-full
+                            object-cover
+                            transition-transform
+                            duration-700
+                            group-hover:scale-[1.03]
+                          "
+                        />
 
-                      {/* CATEGORY */}
+                        {/* SOFT OVERLAY */}
 
-                      {isActive && (
                         <div
                           className="
                             absolute
-                            top-3
+                            inset-0
+                            bg-gradient-to-t
+                            from-[#18322F]/25
+                            via-transparent
+                            to-transparent
+                            pointer-events-none
+                          "
+                        />
+
+                        {/* CATEGORY */}
+
+                        <div
+                          className="
+                            absolute
+                            top-1.5
                             left-1/2
                             -translate-x-1/2
-                            px-3
-                            py-1
+                            max-w-[90%]
+                            px-2
+                            sm:px-2.5
+                            md:px-3
+                            py-0.5
+                            sm:py-1
                             rounded-full
                             bg-[#18322F]/90
                             backdrop-blur-sm
                             border
                             border-[#D9B566]
                             text-white
-                            text-[7px]
-                            sm:text-[8px]
+                            text-[6px]
+                            sm:text-[7px]
+                            md:text-[8px]
                             uppercase
-                            tracking-[0.18em]
+                            tracking-[0.15em]
                             whitespace-nowrap
+                            overflow-hidden
+                            text-ellipsis
                           "
                         >
                           {product.category_name ||
                             "Jewellery"}
                         </div>
-                      )}
 
-                      {/* PRODUCT NUMBER */}
+                        {/* PRODUCT NUMBER */}
 
-                      <div
-                        className="
-                          absolute
-                          bottom-3
-                          left-3
-                          w-8
-                          h-8
-                          rounded-full
-                          bg-[#FAF8F2]/95
-                          border
-                          border-[#D9B566]
-                          flex
-                          items-center
-                          justify-center
-                          text-[#8B6827]
-                          text-[9px]
-                          font-medium
-                        "
-                      >
-                        {String(index + 1).padStart(
-                          2,
-                          "0"
-                        )}
+                        <div
+                          className="
+                            absolute
+                            bottom-1.5
+                            left-1.5
+                            sm:bottom-2
+                            sm:left-2
+                            md:bottom-2.5
+                            md:left-2.5
+                            w-6
+                            h-6
+                            sm:w-7
+                            sm:h-7
+                            md:w-8
+                            md:h-8
+                            rounded-full
+                            bg-[#FAF8F2]/95
+                            border
+                            border-[#D9B566]
+                            flex
+                            items-center
+                            justify-center
+                            text-[#8B6827]
+                            text-[7px]
+                            sm:text-[8px]
+                            md:text-[9px]
+                            font-medium
+                          "
+                        >
+                          {String(
+                            index + 1
+                          ).padStart(2, "0")}
+                        </div>
                       </div>
+                    </Link>
 
-                    </div>
-
-
-                    {/* =========================================
+                    {/* =====================================
                         PRODUCT INFORMATION
-                    ========================================== */}
+                    ====================================== */}
 
                     <div
                       className="
                         text-center
-                        mt-4
+                        mt-2
+                        sm:mt-2.5
+                        md:mt-3
+                        min-h-[34px]
+                        sm:min-h-[40px]
+                        md:min-h-[44px]
                       "
                     >
-
-                      {isActive && (
-                        <div
-                          className="
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            mb-1.5
-                          "
-                        >
-
-                          <span
-                            className="
-                              w-4
-                              h-px
-                              bg-[#D9B566]
-                            "
-                          />
-
-                          <Flower2
-                            size={12}
-                            strokeWidth={1.2}
-                            className="text-[#C8A044]"
-                          />
-
-                          <span
-                            className="
-                              w-4
-                              h-px
-                              bg-[#D9B566]
-                            "
-                          />
-
-                        </div>
-                      )}
-
                       <h3
                         className="
-                          text-base
-                          sm:text-lg
-                          md:text-xl
+                          text-[10px]
+                          sm:text-xs
+                          md:text-sm
+                          lg:text-base
                           text-[#18322F]
                           truncate
-                          px-2
+                          px-1
                         "
                         style={{
                           fontFamily:
@@ -653,353 +728,152 @@ function FeaturedDesigns() {
                       {product.product_code && (
                         <p
                           className="
-                            mt-1
-                            text-[9px]
-                            sm:text-[10px]
+                            mt-0.5
+                            text-[7px]
+                            sm:text-[8px]
+                            md:text-[9px]
                             text-[#777D79]
+                            truncate
                           "
                         >
                           Design No.{" "}
                           {product.product_code}
                         </p>
                       )}
-
                     </div>
-
-
-                    {/* =========================================
-                        SIDE CARD CLICK
-                    ========================================== */}
-
-                    {!isActive && (
-                      <button
-                        type="button"
-                        aria-label={`Show ${product.name}`}
-                        onClick={() =>
-                          goToSlide(index)
-                        }
-                        className="
-                          absolute
-                          inset-0
-                          w-full
-                          h-[calc(100%-65px)]
-                          cursor-pointer
-                          bg-transparent
-                        "
-                      />
-                    )}
-
-
-                    {/* =========================================
-                        ACTIVE CARD LINK
-                    ========================================== */}
-
-                    {isActive && (
-                      <Link
-                        to={`/products/${
-                          product.slug ||
-                          product.id
-                        }`}
-                        aria-label={`View ${product.name}`}
-                        className="
-                          absolute
-                          inset-0
-                          h-[calc(100%-65px)]
-                        "
-                      />
-                    )}
-
                   </div>
-                );
-              }
-            )}
-
+                )
+              )}
+            </div>
           </div>
 
+          {/* =================================================
+              PREVIOUS ARROW
+          ================================================== */}
 
-          {/* ===================================================
-              DESKTOP ARROWS
-          ==================================================== */}
-
-          {featuredProducts.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={previousSlide}
-                aria-label="Previous design"
-                className="
-                  hidden
-                  md:flex
-                  absolute
-                  left-0
-                  lg:left-5
-                  top-[40%]
-                  -translate-y-1/2
-                  w-11
-                  h-11
-                  lg:w-12
-                  lg:h-12
-                  rounded-full
-                  items-center
-                  justify-center
-                  bg-[#FAF8F2]
-                  border
-                  border-[#D9B566]
-                  text-[#765C28]
-                  shadow-[0_6px_20px_rgba(123,92,36,0.10)]
-                  transition-all
-                  duration-300
-                  hover:bg-[#18322F]
-                  hover:text-white
-                  hover:border-[#18322F]
-                  z-50
-                "
-              >
-                <ArrowLeft
-                  size={18}
-                  strokeWidth={1.4}
-                />
-              </button>
-
-
-              <button
-                type="button"
-                onClick={nextSlide}
-                aria-label="Next design"
-                className="
-                  hidden
-                  md:flex
-                  absolute
-                  right-0
-                  lg:right-5
-                  top-[40%]
-                  -translate-y-1/2
-                  w-11
-                  h-11
-                  lg:w-12
-                  lg:h-12
-                  rounded-full
-                  items-center
-                  justify-center
-                  bg-[#FAF8F2]
-                  border
-                  border-[#D9B566]
-                  text-[#765C28]
-                  shadow-[0_6px_20px_rgba(123,92,36,0.10)]
-                  transition-all
-                  duration-300
-                  hover:bg-[#18322F]
-                  hover:text-white
-                  hover:border-[#18322F]
-                  z-50
-                "
-              >
-                <ArrowRight
-                  size={18}
-                  strokeWidth={1.4}
-                />
-              </button>
-            </>
-          )}
-
-
-          {/* ===================================================
-              MOBILE ARROWS
-          ==================================================== */}
-
-          {featuredProducts.length > 1 && (
-            <div
+          {featuredProducts.length >
+            visibleCount && (
+            <button
+              type="button"
+              onClick={previousSlide}
+              aria-label="Previous design"
               className="
+                absolute
+                left-1
+                sm:left-2
+                md:left-3
+                top-[40%]
+                -translate-y-1/2
+                w-8
+                h-8
+                sm:w-9
+                sm:h-9
+                md:w-10
+                md:h-10
+                rounded-full
+                bg-[#FAF8F2]/95
+                border
+                border-[#D9B566]
                 flex
-                md:hidden
                 items-center
                 justify-center
-                gap-4
-                mt-1
+                text-[#8B6827]
+                shadow-md
+                z-30
+                hover:bg-white
+                transition-all
               "
             >
-
-              <button
-                type="button"
-                onClick={previousSlide}
-                aria-label="Previous design"
-                className="
-                  w-10
-                  h-10
-                  rounded-full
-                  flex
-                  items-center
-                  justify-center
-                  border
-                  border-[#D9B566]
-                  bg-[#FAF8F2]
-                  text-[#765C28]
-                  active:scale-95
-                  transition-transform
-                "
-              >
-                <ArrowLeft
-                  size={17}
-                  strokeWidth={1.4}
-                />
-              </button>
-
-
-              <button
-                type="button"
-                onClick={nextSlide}
-                aria-label="Next design"
-                className="
-                  w-10
-                  h-10
-                  rounded-full
-                  flex
-                  items-center
-                  justify-center
-                  border
-                  border-[#D9B566]
-                  bg-[#FAF8F2]
-                  text-[#765C28]
-                  active:scale-95
-                  transition-transform
-                "
-              >
-                <ArrowRight
-                  size={17}
-                  strokeWidth={1.4}
-                />
-              </button>
-
-            </div>
+              <ArrowLeft size={15} />
+            </button>
           )}
 
-        </div>
+          {/* =================================================
+              NEXT ARROW
+          ================================================== */}
 
+          {featuredProducts.length >
+            visibleCount && (
+            <button
+              type="button"
+              onClick={nextSlide}
+              aria-label="Next design"
+              className="
+                absolute
+                right-1
+                sm:right-2
+                md:right-3
+                top-[40%]
+                -translate-y-1/2
+                w-8
+                h-8
+                sm:w-9
+                sm:h-9
+                md:w-10
+                md:h-10
+                rounded-full
+                bg-[#FAF8F2]/95
+                border
+                border-[#D9B566]
+                flex
+                items-center
+                justify-center
+                text-[#8B6827]
+                shadow-md
+                z-30
+                hover:bg-white
+                transition-all
+              "
+            >
+              <ArrowRight size={15} />
+            </button>
+          )}
+        </div>
 
         {/* =====================================================
             DOTS
         ====================================================== */}
 
-        {featuredProducts.length > 1 && (
+        {featuredProducts.length >
+          visibleCount && (
           <div
             className="
               flex
-              items-center
               justify-center
-              gap-1
-              mt-2
+              items-center
+              gap-1.5
+              sm:gap-2
+              mt-5
+              sm:mt-6
             "
           >
-
-            {featuredProducts.map(
-              (product, index) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() =>
-                    goToSlide(index)
+            {Array.from({
+              length: maxIndex + 1,
+            }).map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() =>
+                  goToSlide(index)
+                }
+                aria-label={`Go to slide ${
+                  index + 1
+                }`}
+                className={`
+                  rounded-full
+                  transition-all
+                  duration-300
+                  ${
+                    index === activeIndex
+                      ? "w-7 sm:w-8 h-1.5 bg-[#C8A044]"
+                      : "w-1.5 h-1.5 bg-[#D9B566]"
                   }
-                  aria-label={`Go to design ${
-                    index + 1
-                  }`}
-                  className="p-1"
-                >
-
-                  <span
-                    className={`
-                      block
-                      h-1.5
-                      rounded-full
-                      transition-all
-                      duration-300
-                      ${
-                        index === activeIndex
-                          ? "w-7 bg-[#C8A044]"
-                          : "w-1.5 bg-[#D9B566]"
-                      }
-                    `}
-                  />
-
-                </button>
-              )
-            )}
-
+                `}
+              />
+            ))}
           </div>
         )}
-
-
-        {/* =====================================================
-            MOBILE SWIPE
-        ====================================================== */}
-
-        <p
-          className="
-            md:hidden
-            text-center
-            mt-2
-            text-[8px]
-            uppercase
-            tracking-[0.22em]
-            text-[#9A8A68]
-          "
-        >
-          Swipe to explore
-        </p>
-
-
-        {/* =====================================================
-            VIEW ALL
-        ====================================================== */}
-
-        <div
-          className="
-            flex
-            justify-center
-            mt-6
-            sm:mt-8
-          "
-        >
-
-          <Link
-            to="/collections"
-            className="
-              inline-flex
-              items-center
-              gap-2.5
-              px-6
-              sm:px-7
-              py-2.5
-              sm:py-3
-              rounded-full
-              border
-              border-[#D9B566]
-              text-[#765C28]
-              text-xs
-              sm:text-sm
-              tracking-wide
-              transition-all
-              duration-300
-              hover:bg-[#18322F]
-              hover:text-white
-              hover:border-[#18322F]
-            "
-          >
-
-            <span>
-              View All Designs
-            </span>
-
-            <ArrowRight
-              size={15}
-              strokeWidth={1.4}
-            />
-
-          </Link>
-
-        </div>
-
       </div>
-
     </section>
   );
 }
