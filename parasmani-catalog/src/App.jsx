@@ -15,6 +15,7 @@ import Products from "./pages/admin/Products";
 import Media from "./pages/admin/Media";
 import DesignRequests from "./pages/admin/DesignRequests";
 import Settings from "./pages/admin/Settings";
+import Contact from "./pages/Contact";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 
@@ -52,6 +53,11 @@ function App() {
         <Route
           path="/favorites"
           element={<Favorites />}
+        />
+
+        <Route
+          path="/contact"
+          element={<Contact />}
         />
 
       </Route>
