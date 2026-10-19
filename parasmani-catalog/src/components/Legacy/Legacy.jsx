@@ -1,4 +1,4 @@
-import family from "../../assets/family.jpg";
+import family from "../../assets/family.png";
 import { Link } from "react-router-dom";
 
 function Legacy() {
