@@ -16,6 +16,7 @@ import Media from "./pages/admin/Media";
 import DesignRequests from "./pages/admin/DesignRequests";
 import Settings from "./pages/admin/Settings";
 import Contact from "./pages/Contact";
+import RequestDesign from "./pages/RequestDesign";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 
@@ -58,6 +59,11 @@ function App() {
         <Route
           path="/contact"
           element={<Contact />}
+        />
+
+        <Route
+          path="/request-design"
+          element={<RequestDesign />}
         />
 
       </Route>
