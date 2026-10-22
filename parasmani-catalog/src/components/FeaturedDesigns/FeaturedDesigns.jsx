@@ -567,7 +567,7 @@ function FeaturedDesigns() {
                     ====================================== */}
 
                     <Link
-                      to={`/products/${
+                      to={`/product/${
                         product.slug ||
                         product.id
                       }`}

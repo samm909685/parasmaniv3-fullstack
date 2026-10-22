@@ -21,7 +21,7 @@ function ProductDetailsSection() {
       const allProducts = response.data || [];
 
       const foundProduct = allProducts.find(
-        (item) => item.id === Number(id)
+        (item) => String(item.id) === id || String(item.slug || "") === id
       );
 
       setProduct(foundProduct || null);
