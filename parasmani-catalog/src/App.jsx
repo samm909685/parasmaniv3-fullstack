@@ -19,6 +19,8 @@ import Contact from "./pages/Contact";
 import RequestDesign from "./pages/RequestDesign";
 
 import CustomerLayout from "./layouts/CustomerLayout";
+import About from "./pages/About";
+
 
 
 function App() {
@@ -135,7 +137,8 @@ function App() {
           path="/admin/settings"
           element={<Settings />}
         />
-
+       
+       <Route path="/about" element={<About />} />
       </Route>
 
     </Routes>

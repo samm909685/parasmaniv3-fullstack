@@ -10,6 +10,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const designRequestRoutes = require("./routes/designRequestRoutes");
 const authRoutes = require("./routes/authRoutes");
+const maniRoutes = require("./routes/maniRoutes");
 
 const app = express();
 
@@ -64,6 +65,11 @@ app.use(
 app.use(
   "/api/design-requests",
   designRequestRoutes
+);
+
+app.use(
+  "/api/mani",
+  maniRoutes
 );
 
 
