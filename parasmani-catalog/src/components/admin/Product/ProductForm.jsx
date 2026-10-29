@@ -1,56 +1,74 @@
+import { getManiTypes } from "../../../services/maniTypesService";
 import { useState, useEffect } from "react";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
-import axios from "axios";
+import { X, Image as ImageIcon } from "lucide-react";
+import { getCategories } from "../../../services/categoryService";
 
 import {
   createProduct,
   updateProduct,
 } from "../../../services/productService";
 
-function ProductForm({
-  open,
+function ProductForm(props) {
+  return props.open ? <ProductFormFields key={props.editingProduct?.id ?? "new"} {...props} /> : null;
+}
+
+function ProductFormFields({
   onClose,
   editingProduct,
   refreshProducts,
 }) {
   const [categories, setCategories] = useState([]);
 
-  const [categoryId, setCategoryId] = useState("");
-  const [name, setName] = useState("");
-  const [productCode, setProductCode] = useState("");
-  const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
-  const [weight, setWeight] = useState("");
-  const [purity, setPurity] = useState("");
+  const [categoryId, setCategoryId] = useState(editingProduct?.category_id || "");
+  const [maniTypeId, setManiTypeId] = useState(editingProduct?.mani_type_id || "");
+  const [maniTypes, setManiTypes] = useState([]);
+  const [maniTypeError, setManiTypeError] = useState("");
+  const [typesLoading, setTypesLoading] = useState(true);
+  const isManiCategory = categories.some(c => String(c.id) === String(categoryId) && c.slug === "mani");
+  const loadManiTypes = async () => {
+    setTypesLoading(true); setManiTypeError("");
+    try { setManiTypes(await getManiTypes()); }
+    catch (error) { setManiTypeError(error.message); }
+    finally { setTypesLoading(false); }
+  };
+  useEffect(() => {
+    const controller = new AbortController();
+    getManiTypes(controller.signal).then(rows => {
+      if (!controller.signal.aborted) { setManiTypes(rows); setManiTypeError(""); setTypesLoading(false); }
+    }).catch(error => {
+      if (!controller.signal.aborted) { setManiTypeError(error.message); setTypesLoading(false); }
+    });
+    return () => controller.abort();
+  }, []);
+  const [name, setName] = useState(editingProduct?.name || "");
+  const [productCode, setProductCode] = useState(editingProduct?.product_code || "");
+  const [slug, setSlug] = useState(editingProduct?.slug || "");
+  const [description, setDescription] = useState(editingProduct?.description || "");
+  const [weight, setWeight] = useState(editingProduct?.weight || "");
+  const [purity, setPurity] = useState(editingProduct?.purity || "");
 
   const [featuredImage, setFeaturedImage] = useState(null);
-  const [featuredImagePreview, setFeaturedImagePreview] = useState(null);
+  const [featuredImagePreview, setFeaturedImagePreview] = useState(editingProduct?.featured_image || null);
 
   const [galleryImages, setGalleryImages] = useState([]);
 
-  const [featured, setFeatured] = useState(false);
-  const [status, setStatus] = useState(true);
+  const [featured, setFeatured] = useState([true,1,"1","true"].includes(editingProduct?.featured));
+  const [status, setStatus] = useState(editingProduct ? [true,1,"1","true"].includes(editingProduct.status) : true);
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadCategories();
+    let cancelled = false;
+    getCategories().then(res => { if (!cancelled) setCategories(res.data); }).catch(console.error);
+    return () => { cancelled = true; };
   }, []);
-
-  const loadCategories = async () => {
-    try {
-      const res = await axios.get(
-        "https://api.parasmanijewelers.in/api/categories"
-      );
-
-      setCategories(res.data.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  useEffect(() => () => {
+    if (featuredImagePreview?.startsWith("blob:")) URL.revokeObjectURL(featuredImagePreview);
+  }, [featuredImagePreview]);
 
   const resetForm = () => {
     setCategoryId("");
+    setManiTypeId("");
     setName("");
     setProductCode("");
     setSlug("");
@@ -71,44 +89,7 @@ function ProductForm({
      LOAD PRODUCT WHEN EDITING
   ========================================================== */
 
-  useEffect(() => {
-    if (editingProduct) {
-      setCategoryId(editingProduct.category_id || "");
-      setName(editingProduct.name || "");
-      setProductCode(editingProduct.product_code || "");
-      setSlug(editingProduct.slug || "");
-      setDescription(editingProduct.description || "");
-      setWeight(editingProduct.weight || "");
-      setPurity(editingProduct.purity || "");
 
-      setFeatured(Boolean(editingProduct.featured));
-      setStatus(Boolean(editingProduct.status));
-
-      /*
-        IMPORTANT:
-
-        Do NOT clear the existing image preview.
-
-        editingProduct.featured_image is already returned
-        by your API as the complete image URL.
-      */
-
-      setFeaturedImage(null);
-      setFeaturedImagePreview(
-        editingProduct.featured_image || null
-      );
-
-      /*
-        We don't replace existing gallery images here.
-        The backend will preserve them if no new gallery
-        images are uploaded.
-      */
-
-      setGalleryImages([]);
-    } else {
-      resetForm();
-    }
-  }, [editingProduct]);
 
   /* =========================================================
      FEATURED IMAGE CHANGE
@@ -145,12 +126,17 @@ function ProductForm({
       return;
     }
 
+    if (isManiCategory && (typesLoading || maniTypeError || !maniTypeId)) {
+      alert(maniTypeError || "Please select a Mani type. You can add types in Admin > Mani Types.");
+      return;
+    }
     try {
       setLoading(true);
 
       const formData = new FormData();
 
       formData.append("category_id", categoryId);
+      formData.append("mani_type_id", isManiCategory ? maniTypeId : "");
       formData.append("name", name);
       formData.append("product_code", productCode);
       formData.append("slug", slug);
@@ -159,7 +145,7 @@ function ProductForm({
       formData.append("purity", purity);
       formData.append("featured", featured);
       formData.append("status", status);
-      formData.append("display_order", 0);
+      formData.append("display_order", editingProduct?.display_order ?? 0);
 
       /*
         IMPORTANT:
@@ -212,13 +198,13 @@ function ProductForm({
       }
     } catch (err) {
       console.log(err);
-      alert("Failed to save product");
+      alert(err.response?.data?.message || "Failed to save product");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!open) return null;
+
 
   return (
     <>
@@ -475,7 +461,7 @@ function ProductForm({
             <select
               value={categoryId}
               onChange={(e) =>
-                setCategoryId(e.target.value)
+                { setCategoryId(e.target.value); setManiTypeId(""); }
               }
               className="
                 w-full
@@ -505,6 +491,19 @@ function ProductForm({
 
           </div>
 
+
+          {isManiCategory && (
+            <div>
+              <label htmlFor="product-mani-type" className="block font-medium mb-2">Mani Type</label>
+              <select id="product-mani-type" value={maniTypeId} onChange={e => setManiTypeId(e.target.value)} disabled={typesLoading || Boolean(maniTypeError)} className="w-full border rounded-xl px-4 py-3">
+                <option value="">{typesLoading ? "Loading types..." : "Select Mani Type"}</option>
+                {maniTypes.filter(t => String(t.category_id) === String(categoryId) && ([true,1,"1","true"].includes(t.status) || String(t.id) === String(maniTypeId))).map(t => <option key={t.id} value={t.id}>{t.name}{[true,1,"1","true"].includes(t.status) ? "" : " (inactive)"}</option>)}
+              </select>
+              <p className="text-sm text-gray-500 mt-2">Category: Mani. Choose the product's type here. Manage types in the Mani Types sidebar option.</p>
+              {maniTypeError && <p role="alert" className="text-sm text-red-700 mt-2">{maniTypeError}</p>}
+              <button type="button" onClick={loadManiTypes} className="mt-2 text-sm underline">Refresh types</button>
+            </div>
+          )}
 
           {/* Weight + Purity */}
 

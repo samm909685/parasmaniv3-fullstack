@@ -21,6 +21,7 @@ const API_URL =
   "https://api.parasmanijewelers.in";
 
 const menu = [
+  { title: "Mani Types", icon: <Gem size={20} />, link: "/admin/mani-types" },
   {
     title: "Dashboard",
     icon: <LayoutDashboard size={20} />,
@@ -277,7 +278,7 @@ function Sidebar({
             NAVIGATION
         ================================================== */}
 
-        <nav className="mt-8 px-4 space-y-2">
+        <nav className="mt-8 px-4 space-y-2 max-h-[calc(100dvh-245px)] overflow-y-auto pb-6">
 
           {menu.map((item) => (
 

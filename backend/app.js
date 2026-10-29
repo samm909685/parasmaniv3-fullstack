@@ -12,6 +12,8 @@ const designRequestRoutes = require("./routes/designRequestRoutes");
 const authRoutes = require("./routes/authRoutes");
 const maniRoutes = require("./routes/maniRoutes");
 
+const maniTypeRoutes = require("./routes/maniTypeRoutes");
+
 const app = express();
 
 /* ==========================
@@ -84,5 +86,7 @@ app.get("/", (req, res) => {
   });
 });
 
+
+app.use("/api/mani-types", maniTypeRoutes);
 
 module.exports = app;

@@ -1,4 +1,5 @@
-const API_URL = "https://api.parasmanijewelers.in/api/categories";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://api.parasmanijewelers.in/api").replace(/\/+$/, "");
+const API_URL = `${API_BASE}/categories`;
 
 const getToken = () =>
   localStorage.getItem("parasmani_admin_token");

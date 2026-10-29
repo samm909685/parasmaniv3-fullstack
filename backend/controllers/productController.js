@@ -1,3 +1,4 @@
+const { validateProductType } = require("../utils/validateManiType");
 const Product = require("../models/productModel");
 const path = require("path");
 const convertHeicToJpg = require("../utils/convertHeic");
@@ -8,11 +9,13 @@ const convertHeicToJpg = require("../utils/convertHeic");
 ========================== */
 
 exports.getAllProducts = (req, res) => {
-  const API_URL = `${req.protocol}://${req.get("host")}`;
+  const API_URL =
+  process.env.PUBLIC_API_URL ||
+  `${req.protocol}://${req.get("host")}`;
 
   Product.getAll((err, results) => {
     if (err) {
-      return res.status(500).json({
+      return res.status(err.statusCode || 500).json({
         success: false,
         message: err.message,
       });
@@ -58,6 +61,7 @@ exports.getAllProducts = (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
+    const maniTypeId = await validateProductType(req.body.category_id, req.body.mani_type_id);
 
     /* ==========================
        FEATURED IMAGE
@@ -100,6 +104,7 @@ exports.createProduct = async (req, res) => {
     ========================== */
 
     const product = {
+      mani_type_id: maniTypeId,
 
       category_id:
         req.body.category_id,
@@ -150,7 +155,7 @@ exports.createProduct = async (req, res) => {
       (err, result) => {
 
         if (err) {
-          return res.status(500).json({
+          return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message,
           });
@@ -172,7 +177,7 @@ exports.createProduct = async (req, res) => {
       err
     );
 
-    res.status(500).json({
+    res.status(err.statusCode || 500).json({
       success: false,
       message: err.message,
     });
@@ -252,6 +257,8 @@ exports.updateProduct = async (req, res) => {
       a new image, the old image
       remains in the database.
     */
+
+    const maniTypeId = await validateProductType(req.body.category_id, req.body.mani_type_id, existingProduct);
 
     let featuredImage =
       existingProduct.featured_image || null;
@@ -341,6 +348,7 @@ exports.updateProduct = async (req, res) => {
     ========================== */
 
     const product = {
+      mani_type_id: maniTypeId,
 
       category_id:
         req.body.category_id,
@@ -397,7 +405,7 @@ exports.updateProduct = async (req, res) => {
 
         if (err) {
 
-          return res.status(500).json({
+          return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message,
           });
@@ -420,7 +428,7 @@ exports.updateProduct = async (req, res) => {
       err
     );
 
-    res.status(500).json({
+    res.status(err.statusCode || 500).json({
       success: false,
       message: err.message,
     });
@@ -442,7 +450,7 @@ exports.deleteProduct = (req, res) => {
 
       if (err) {
 
-        return res.status(500).json({
+        return res.status(err.statusCode || 500).json({
           success: false,
           message: err.message,
         });

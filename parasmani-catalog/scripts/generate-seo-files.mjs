@@ -120,6 +120,7 @@ const [categories, products, template] = await Promise.all([
 ]);
 
 const pages = [
+  {route: "/mani",title: "The World of Mani | Parasmani Jewellers",description: "Explore Plain Mani, Spot Mani, Nakshi Mani and more from Parasmani Jewellers."},
   {
     route: "/collections",
     title: "Traditional Gold Jewellery Collections | Parasmani Jewellers",

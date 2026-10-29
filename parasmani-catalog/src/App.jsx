@@ -1,3 +1,5 @@
+import Mani from "./pages/Mani";
+import ManiTypes from "./pages/admin/ManiTypes";
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/admin/ProtectedRoute";
@@ -32,6 +34,8 @@ function App() {
       ====================================================== */}
 
       <Route element={<CustomerLayout />}>
+        <Route path="/about" element={<About />} />
+        <Route path="/mani" element={<Mani />} />
 
         <Route
           path="/"
@@ -90,6 +94,7 @@ function App() {
       ====================================================== */}
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/admin/mani-types" element={<ManiTypes />} />
 
         {/* Dashboard */}
 
@@ -138,7 +143,7 @@ function App() {
           element={<Settings />}
         />
        
-       <Route path="/about" element={<About />} />
+
       </Route>
 
     </Routes>

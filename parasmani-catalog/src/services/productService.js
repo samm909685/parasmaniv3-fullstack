@@ -1,6 +1,7 @@
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://api.parasmanijewelers.in/api").replace(/\/+$/, "");
 import axios from "axios";
 
-const API = "https://api.parasmanijewelers.in/api/products";
+const API = `${API_BASE}/products`;
 
 const getToken = () =>
   localStorage.getItem("parasmani_admin_token");
