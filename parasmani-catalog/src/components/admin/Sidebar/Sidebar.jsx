@@ -21,7 +21,6 @@ const API_URL =
   "https://api.parasmanijewelers.in";
 
 const menu = [
-  { title: "Mani Types", icon: <Gem size={20} />, link: "/admin/mani-types" },
   {
     title: "Dashboard",
     icon: <LayoutDashboard size={20} />,

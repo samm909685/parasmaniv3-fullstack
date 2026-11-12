@@ -19,3 +19,17 @@ function buildCatalog(categories,products,types,origin) {
     });
 }
 module.exports={buildCatalog,active,imageUrl};
+
+/** Flat public product catalog. Legacy grouping above remains for cached clients. */
+function buildProducts(categories, products, origin) {
+  const category = categories.find(item => item.slug === "mani" && active(item.status));
+  if (!category) return [];
+  return products.filter(p => active(p.status) && String(p.category_id) === String(category.id))
+    .sort((a,b) => (Number(a.display_order)||0)-(Number(b.display_order)||0) || Number(b.id)-Number(a.id))
+    .map(p => ({
+      id:p.id, name:p.name, slug:p.slug||"", product_code:p.product_code||"",
+      description:p.description||"", weight:p.weight||"", purity:p.purity||"",
+      featured_image:imageUrl(p.featured_image,"products",origin)
+    }));
+}
+module.exports.buildProducts = buildProducts;

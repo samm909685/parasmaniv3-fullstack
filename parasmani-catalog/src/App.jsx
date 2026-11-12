@@ -1,6 +1,5 @@
 import Mani from "./pages/Mani";
-import ManiTypes from "./pages/admin/ManiTypes";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -94,7 +93,7 @@ function App() {
       ====================================================== */}
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/admin/mani-types" element={<ManiTypes />} />
+        <Route path="/admin/mani-types" element={<Navigate to="/admin/products" replace />} />
 
         {/* Dashboard */}
 

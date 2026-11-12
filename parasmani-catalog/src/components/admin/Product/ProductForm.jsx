@@ -1,4 +1,3 @@
-import { getManiTypes } from "../../../services/maniTypesService";
 import { useState, useEffect } from "react";
 import { X, Image as ImageIcon } from "lucide-react";
 import { getCategories } from "../../../services/categoryService";
@@ -20,26 +19,6 @@ function ProductFormFields({
   const [categories, setCategories] = useState([]);
 
   const [categoryId, setCategoryId] = useState(editingProduct?.category_id || "");
-  const [maniTypeId, setManiTypeId] = useState(editingProduct?.mani_type_id || "");
-  const [maniTypes, setManiTypes] = useState([]);
-  const [maniTypeError, setManiTypeError] = useState("");
-  const [typesLoading, setTypesLoading] = useState(true);
-  const isManiCategory = categories.some(c => String(c.id) === String(categoryId) && c.slug === "mani");
-  const loadManiTypes = async () => {
-    setTypesLoading(true); setManiTypeError("");
-    try { setManiTypes(await getManiTypes()); }
-    catch (error) { setManiTypeError(error.message); }
-    finally { setTypesLoading(false); }
-  };
-  useEffect(() => {
-    const controller = new AbortController();
-    getManiTypes(controller.signal).then(rows => {
-      if (!controller.signal.aborted) { setManiTypes(rows); setManiTypeError(""); setTypesLoading(false); }
-    }).catch(error => {
-      if (!controller.signal.aborted) { setManiTypeError(error.message); setTypesLoading(false); }
-    });
-    return () => controller.abort();
-  }, []);
   const [name, setName] = useState(editingProduct?.name || "");
   const [productCode, setProductCode] = useState(editingProduct?.product_code || "");
   const [slug, setSlug] = useState(editingProduct?.slug || "");
@@ -68,7 +47,6 @@ function ProductFormFields({
 
   const resetForm = () => {
     setCategoryId("");
-    setManiTypeId("");
     setName("");
     setProductCode("");
     setSlug("");
@@ -126,17 +104,17 @@ function ProductFormFields({
       return;
     }
 
-    if (isManiCategory && (typesLoading || maniTypeError || !maniTypeId)) {
-      alert(maniTypeError || "Please select a Mani type. You can add types in Admin > Mani Types.");
-      return;
-    }
     try {
       setLoading(true);
 
       const formData = new FormData();
 
       formData.append("category_id", categoryId);
-      formData.append("mani_type_id", isManiCategory ? maniTypeId : "");
+      // Preserve legacy assignments when editing in the same category.
+      // New products do not need a type; switching category clears the old link.
+      if (!editingProduct || String(editingProduct.category_id) !== String(categoryId)) {
+        formData.append("mani_type_id", "");
+      }
       formData.append("name", name);
       formData.append("product_code", productCode);
       formData.append("slug", slug);
@@ -461,7 +439,7 @@ function ProductFormFields({
             <select
               value={categoryId}
               onChange={(e) =>
-                { setCategoryId(e.target.value); setManiTypeId(""); }
+                setCategoryId(e.target.value)
               }
               className="
                 w-full
@@ -491,19 +469,6 @@ function ProductFormFields({
 
           </div>
 
-
-          {isManiCategory && (
-            <div>
-              <label htmlFor="product-mani-type" className="block font-medium mb-2">Mani Type</label>
-              <select id="product-mani-type" value={maniTypeId} onChange={e => setManiTypeId(e.target.value)} disabled={typesLoading || Boolean(maniTypeError)} className="w-full border rounded-xl px-4 py-3">
-                <option value="">{typesLoading ? "Loading types..." : "Select Mani Type"}</option>
-                {maniTypes.filter(t => String(t.category_id) === String(categoryId) && ([true,1,"1","true"].includes(t.status) || String(t.id) === String(maniTypeId))).map(t => <option key={t.id} value={t.id}>{t.name}{[true,1,"1","true"].includes(t.status) ? "" : " (inactive)"}</option>)}
-              </select>
-              <p className="text-sm text-gray-500 mt-2">Category: Mani. Choose the product's type here. Manage types in the Mani Types sidebar option.</p>
-              {maniTypeError && <p role="alert" className="text-sm text-red-700 mt-2">{maniTypeError}</p>}
-              <button type="button" onClick={loadManiTypes} className="mt-2 text-sm underline">Refresh types</button>
-            </div>
-          )}
 
           {/* Weight + Purity */}
 
